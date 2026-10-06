@@ -491,98 +491,6 @@ Transform:
   m_Father: {fileID: 796789743}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &419320450
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 419320453}
-  - component: {fileID: 419320452}
-  - component: {fileID: 419320451}
-  m_Layer: 0
-  m_Name: LeftSideCamera1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!81 &419320451
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 419320450}
-  m_Enabled: 0
---- !u!20 &419320452
-Camera:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 419320450}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 1
-  m_GateFitMode: 2
-  m_FOVAxisMode: 0
-  m_Iso: 200
-  m_ShutterSpeed: 0.005
-  m_Aperture: 16
-  m_FocusDistance: 10
-  m_FocalLength: 50
-  m_BladeCount: 5
-  m_Curvature: {x: 2, y: 11}
-  m_BarrelClipping: 0.25
-  m_Anamorphism: 0
-  m_SensorSize: {x: 36, y: 24}
-  m_LensShift: {x: 0, y: 0}
-  m_NormalizedViewPortRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 55
-  orthographic: 0
-  orthographic size: 5
-  m_Depth: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 3
-  m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
-  m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
-  m_StereoConvergence: 10
-  m_StereoSeparation: 0.022
---- !u!4 &419320453
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 419320450}
-  m_LocalRotation: {x: 0.13049509, y: 0.021628262, z: -0.002847414, w: 0.9912089}
-  m_LocalPosition: {x: -0.30674848, y: 0, z: 0}
-  m_LocalScale: {x: 1.0015256, y: 0.99786556, z: 0.99251664}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1378636664}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 15, y: 2.5, z: 0}
 --- !u!1 &444142174
 GameObject:
   m_ObjectHideFlags: 0
@@ -818,7 +726,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &590824859
 GameObject:
@@ -1085,7 +993,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 40.075, y: -32.718, z: -22.47}
 --- !u!1 &796789742
 GameObject:
@@ -1219,7 +1127,7 @@ GameObject:
   - component: {fileID: 848100942}
   - component: {fileID: 848100941}
   m_Layer: 0
-  m_Name: Terrain (Crane)
+  m_Name: Terrain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1297,7 +1205,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &885161480
 GameObject:
@@ -1499,98 +1407,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 928291067}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &951492213
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 951492216}
-  - component: {fileID: 951492215}
-  - component: {fileID: 951492214}
-  m_Layer: 0
-  m_Name: RightSideCamera1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!81 &951492214
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 951492213}
-  m_Enabled: 0
---- !u!20 &951492215
-Camera:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 951492213}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 1
-  m_GateFitMode: 2
-  m_FOVAxisMode: 0
-  m_Iso: 200
-  m_ShutterSpeed: 0.005
-  m_Aperture: 16
-  m_FocusDistance: 10
-  m_FocalLength: 50
-  m_BladeCount: 5
-  m_Curvature: {x: 2, y: 11}
-  m_BarrelClipping: 0.25
-  m_Anamorphism: 0
-  m_SensorSize: {x: 36, y: 24}
-  m_LensShift: {x: 0, y: 0}
-  m_NormalizedViewPortRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 55
-  orthographic: 0
-  orthographic size: 5
-  m_Depth: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 2
-  m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
-  m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
-  m_StereoConvergence: 10
-  m_StereoSeparation: 0.022
---- !u!4 &951492216
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 951492213}
-  m_LocalRotation: {x: 0.0028474266, y: 0.991209, z: -0.1304951, w: 0.02162836}
-  m_LocalPosition: {x: -0.30674848, y: 0, z: 0}
-  m_LocalScale: {x: 1.0015256, y: 0.9978654, z: 0.99251664}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1378636664}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 15, y: 177.5, z: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -2252,7 +2068,7 @@ Transform:
   m_Children:
   - {fileID: 1012316562}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1353118729
 GameObject:
@@ -2426,11 +2242,9 @@ Transform:
   - {fileID: 1512200930}
   - {fileID: 2127529983}
   - {fileID: 444142177}
-  - {fileID: 951492216}
-  - {fileID: 419320453}
   - {fileID: 1514171645}
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1378636666
 MonoBehaviour:
@@ -2448,68 +2262,51 @@ MonoBehaviour:
   mainLifMag: {fileID: 1514171645}
   lifMags:
   - target: {fileID: 1697310442}
-    downCheckOrigin: {fileID: 2014185970}
     minX: -0.6791
     maxX: -0.1791
     movable: 1
   - target: {fileID: 677659821}
-    downCheckOrigin: {fileID: 1229118835}
     minX: -0.4515
     maxX: -0.2015
     movable: 1
   - target: {fileID: 1743662104}
-    downCheckOrigin: {fileID: 1065044026}
     minX: 0
     maxX: 0
     movable: 0
   - target: {fileID: 1881559430}
-    downCheckOrigin: {fileID: 83534884}
     minX: 0.2015
     maxX: 0.4515
     movable: 1
   - target: {fileID: 928291068}
-    downCheckOrigin: {fileID: 220758341}
     minX: 0.1791
     maxX: 0.6791
     movable: 1
-  useJoystickStepSpeed: 1
-  joystickSpeedZeroRange: 0.1
+  zSpeeds:
+  - 7.5
+  - 20
+  - 37.5
+  - 70
   zSpeedIndex: 0
+  mainLifMagXSpeeds:
+  - 4.2
+  - 10.5
+  - 21
+  - 42
   mainLifMagXSpeedIndex: 0
+  mainLifMagYSpeeds:
+  - 1.2
+  - 3
+  - 6
+  - 12
   mainLifMagYSpeedIndex: 0
-  lifOuterSpeeds: 3.54
-  lifOuterSpeedIndex: 0
-  lifInnerSpeeds: 1.785
-  lifInnerSpeedIndex: 0
+  lifOuterSpeed: 3.54
+  lifInnerSpeed: 1.785
   minZ: -20
   maxZ: 10
   minMainX: -0.368
   maxMainX: 0.368
   minMainY: -5.31
   maxMainY: -1.56
-  lifMagSystem: {fileID: 1514171650}
-  sensors:
-  - {fileID: 987015979}
-  - {fileID: 1699447030}
-  - {fileID: 1743662108}
-  - {fileID: 1874086611}
-  - {fileID: 796789747}
-  craneInformationDisplay: {fileID: 0}
-  downCheckOrigin: {fileID: 1065044026}
-  downCheckHalfExtents: {x: 0.2, y: 0.03, z: 0.5}
-  boardLayer:
-    serializedVersion: 2
-    m_Bits: 8
-  skinWidth: 0.01
-  descentLockedByWarningArea: 0
-  unlockYHeight: -2
-  downStopLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  showDebugBoxCast: 0
-  uiButtonCsvLogger: {fileID: 0}
-  warningText: {fileID: 0}
-  warningMessage: "\u8B66\u544A\uFF1A\u677F\u304C\u914D\u7F6E\u7981\u6B62\u9818\u57DF\u306B\u4FB5\u5165\u3057\u307E\u3057\u305F\n\u4E00\u5B9A\u9AD8\u3055\u307E\u3067\u4E0A\u6607\u3057\u3066\u304F\u3060\u3055\u3044"
 --- !u!1 &1414535768
 GameObject:
   m_ObjectHideFlags: 0
@@ -2709,98 +2506,6 @@ Transform:
   m_Father: {fileID: 1697310442}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 90, y: 90, z: 0}
---- !u!1 &1468269204
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1468269207}
-  - component: {fileID: 1468269206}
-  - component: {fileID: 1468269205}
-  m_Layer: 0
-  m_Name: Terrain
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
---- !u!154 &1468269205
-TerrainCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1468269204}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_TerrainData: {fileID: 15600000, guid: 1ddda91e324a70c44b4ef0f571bd231c, type: 2}
-  m_EnableTreeColliders: 1
---- !u!218 &1468269206
-Terrain:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1468269204}
-  m_Enabled: 1
-  serializedVersion: 6
-  m_TerrainData: {fileID: 15600000, guid: 1ddda91e324a70c44b4ef0f571bd231c, type: 2}
-  m_TreeDistance: 5000
-  m_TreeBillboardDistance: 50
-  m_TreeCrossFadeLength: 5
-  m_TreeMaximumFullLODCount: 50
-  m_DetailObjectDistance: 80
-  m_DetailObjectDensity: 1
-  m_HeightmapPixelError: 5
-  m_SplatMapDistance: 1000
-  m_HeightmapMaximumLOD: 0
-  m_ShadowCastingMode: 2
-  m_DrawHeightmap: 1
-  m_DrawInstanced: 0
-  m_DrawTreesAndFoliage: 1
-  m_StaticShadowCaster: 0
-  m_IgnoreQualitySettings: 0
-  m_ReflectionProbeUsage: 1
-  m_MaterialTemplate: {fileID: 10652, guid: 0000000000000000f000000000000000, type: 0}
-  m_BakeLightProbesForTrees: 1
-  m_PreserveTreePrototypeLayers: 0
-  m_DeringLightProbesForTrees: 1
-  m_ReceiveGI: 1
-  m_ScaleInLightmap: 0.0256
-  m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
-  m_GroupingID: 0
-  m_RenderingLayerMask: 1
-  m_AllowAutoConnect: 1
-  m_EnableHeightmapRayTracing: 1
-  m_EnableTreesAndDetailsRayTracing: 0
-  m_TreeMotionVectorModeOverride: 3
---- !u!4 &1468269207
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1468269204}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -500, y: 0, z: -500}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1512200927
 GameObject:
   m_ObjectHideFlags: 0
@@ -3022,11 +2727,27 @@ MonoBehaviour:
   interventionInitialCurrentAmpere: 40
   interventionReleaseCurrentAmpere: 40
   isInterventionCurrentHoldMode: 0
+  isTaskSwitchSafeCurrentHoldMode: 0
+  <CurrentSliderInput01>k__BackingField: 0
+  <CurrentElectricCurrentA>k__BackingField: 0
+  <CurrentLiftCapacityKg>k__BackingField: 0
+  <CurrentAttachedWeightKg>k__BackingField: 0
+  <CurrentRequiredCurrentA>k__BackingField: 0
   useBoundsWeightForInterventionBoards: 1
   detachCurrentEpsilonAmpere: 0.01
   capacityDetachMarginKg: 0
   useRandomLiftFailure: 0
   liftFailureProbability: 0.05
+  isAttachAccumulating: 0
+  sliderAccumulatedValue: 0
+  sliderSampleTimer: 0
+  lastAttachFailedByRandom: 0
+  lifMagDisplayAccumValues:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
   useBoardSizeThreshold: 1
   referenceBoardSize: {x: 4.425, y: 0.045, z: 1.075}
   minThresholdMultiplier: 0.125
@@ -3035,10 +2756,17 @@ MonoBehaviour:
   referenceMagnetContactCount: 5
   maxContactMultiplier: 5
   attachCooldown: 0.2
-  lifMagCurrentOn: 0000000000
+  lastAttachTime: -999
+  lifMagCurrentOn: 
   showMagnetContactDebugLog: 1
   magnetContactDebugInterval: 0.2
+  magnetContactDebugTimer: 0
   showDebugOverlapBox: 0
+  debugHasOverlapBox: 0
+  debugOverlapOrigin: {x: 0, y: 0, z: 0}
+  debugOverlapHalfExtents: {x: 0, y: 0, z: 0}
+  debugOverlapRotation: {x: 0, y: 0, z: 0, w: 1}
+  debugSelectedCandidate: {fileID: 0}
 --- !u!1 &1578853395
 GameObject:
   m_ObjectHideFlags: 0
@@ -3176,7 +2904,7 @@ Transform:
   m_Children:
   - {fileID: 963194228}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1602192854
 GameObject:
@@ -3275,7 +3003,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1612894383
 MonoBehaviour:
@@ -3289,80 +3017,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a84bfdc413a59049a855252174a62dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  operationMode: 0
-  singleCraneIndex: 0
-  craneRegistry: {fileID: 0}
-  displayLayoutManager: {fileID: 0}
-  targetInformationDisplay: {fileID: 0}
-  multiDisplayUiSet:
-    craneStatusScreen: {fileID: 0}
-    additionalCraneStatusScreens: []
-    waitingScreen: {fileID: 0}
-    craneInformationDisplay: {fileID: 0}
-    lifMagCurrentButtons: []
-    currentCraneNameText: {fileID: 0}
-    craneSelectButtons: []
-    lockUnlockButton: {fileID: 0}
-    lockUnlockButtonText: {fileID: 0}
-    additionalLockUnlockButtons: []
-    additionalLockUnlockButtonTexts: []
-    speedControlUIButtons: []
-    zSpeedText: {fileID: 0}
-    mainLifMagXSpeedText: {fileID: 0}
-    mainLifMagYSpeedText: {fileID: 0}
-  singleDisplayUiSet:
-    craneStatusScreen: {fileID: 0}
-    additionalCraneStatusScreens: []
-    waitingScreen: {fileID: 0}
-    craneInformationDisplay: {fileID: 0}
-    lifMagCurrentButtons: []
-    currentCraneNameText: {fileID: 0}
-    craneSelectButtons: []
-    lockUnlockButton: {fileID: 0}
-    lockUnlockButtonText: {fileID: 0}
-    additionalLockUnlockButtons: []
-    additionalLockUnlockButtonTexts: []
-    speedControlUIButtons: []
-    zSpeedText: {fileID: 0}
-    mainLifMagXSpeedText: {fileID: 0}
-    mainLifMagYSpeedText: {fileID: 0}
-  taskSwitchDisplayUiSet:
-    craneStatusScreen: {fileID: 0}
-    additionalCraneStatusScreens: []
-    waitingScreen: {fileID: 0}
-    craneInformationDisplay: {fileID: 0}
-    lifMagCurrentButtons: []
-    currentCraneNameText: {fileID: 0}
-    craneSelectButtons: []
-    lockUnlockButton: {fileID: 0}
-    lockUnlockButtonText: {fileID: 0}
-    additionalLockUnlockButtons: []
-    additionalLockUnlockButtonTexts: []
-    speedControlUIButtons: []
-    zSpeedText: {fileID: 0}
-    mainLifMagXSpeedText: {fileID: 0}
-    mainLifMagYSpeedText: {fileID: 0}
-  interventionScenarioManager: {fileID: 0}
-  inputMode: 0
-  speedControlMode: 1
-  debugMode: 0
-  joyStick2Horizontal: JoyStick2Horizontal
-  joyStick2Vertical: JoyStick2Vertical
-  joyStick3Vertical: JoyStick3Vertical
-  joyStick2Trigger: JoyStick2Trigger
-  joyStick3MiniVertical: JoyStick3MiniVertical
-  debugJoyStick2Horizontal: JoyStick1RightHorizontal
-  debugJoyStick2Vertical: JoyStick1RightVertical
-  debugJoyStick3Vertical: JoyStick1LeftVertical
-  deadZone: 0.1
+  cranes:
+  - {fileID: 1378636666}
   currentCraneIndex: 0
-  lifMagCurrentCount: 5
-  craneStatusManager: {fileID: 0}
-  hideInactiveCraneButtons: 1
-  normalButtonColor: {r: 1, g: 1, b: 1, a: 1}
-  selectedButtonColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  unlockColor: {r: 0.7, g: 1, b: 0.7, a: 1}
-  lockColor: {r: 1, g: 0.7, b: 0.7, a: 1}
+  inputMode: 0
+  deadZone: 0.1
+  joyStickHorizontal: JoyStick2Horizontal
+  joyStickVertical: JoyStick2Vertical
+  joyStickLift: JoyStick3Vertical
 --- !u!114 &1612894384
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3375,6 +3037,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8715efeb82135f344a8f9da57fcf8ec0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enableLogging: 0
   axis1: JoyStick2Horizontal
   axis2: JoyStick2Vertical
   axis3: JoyStick3Horizontal
