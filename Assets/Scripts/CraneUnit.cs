@@ -1,0 +1,1030 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+[DisallowMultipleComponent]
+public class CraneUnit : MonoBehaviour
+{
+    private const int CranesPerZGroup = 6;
+    private const float CraneGroupZInterval = 200f;
+    private const float BaseMinZ = -20f;
+    private const float BaseMaxZ = 25f;
+
+    [System.Serializable]
+    public class LifMagSetting
+    {
+        public Transform target;
+        public Transform downCheckOrigin;
+        public float minX;
+        public float maxX;
+        public bool movable = true;
+    }
+    
+    [Header("References")]
+    [SerializeField] private Transform mainCrane;
+    [SerializeField] private Transform mainLifMag;
+
+    [Header("LifMag Settings (left to right: lif0, lif1, lif2, lif3, lif4)")]
+    [SerializeField] private LifMagSetting[] lifMags = new LifMagSetting[5];
+
+    [Header("Joystick Step Speed")]
+    [SerializeField] private bool useJoystickStepSpeed = false;
+    [SerializeField] private float joystickSpeedZeroRange = 0.1f;
+
+    [Header("Z Speed (MainCrane) [m/min]")]
+    private float[] zSpeeds = { 7.5f, 20f, 37.5f, 70f };
+    [SerializeField] private int zSpeedIndex = 0;
+
+    [Header("MainLifMag X Speed [m/min]")]
+    private float[] mainLifMagXSpeeds = { 4.2f, 10.5f, 21f, 42f }; // 2.1f, 5.25f, 10.5f, 21f
+    [SerializeField] private int mainLifMagXSpeedIndex = 0;
+
+    [Header("MainLifMag Y Speed [m/min]")]
+    private float[] mainLifMagYSpeeds = { 1.2f, 3f, 6f, 12f }; // 0.8f, 2f, 4f, 8f
+    [SerializeField] private int mainLifMagYSpeedIndex = 0;
+
+    [Header("LifMag Outer Speed (lif0, lif4) [m/min]")]
+    [SerializeField] private float lifOuterSpeeds = 3.54f;
+    [SerializeField] private int lifOuterSpeedIndex = 0;
+
+    [Header("LifMag Inner Speed (lif1, lif3) [m/min]")]
+    [SerializeField] private float lifInnerSpeeds = 1.785f;
+    [SerializeField] private int lifInnerSpeedIndex = 0;
+
+    public string ZSpeedDisplayText { get; private set; }
+    public string MainLifMagXSpeedDisplayText { get; private set; }
+    public string MainLifMagYSpeedDisplayText { get; private set; }
+
+    [Header("MainCrane Z Range")]
+    [SerializeField] private float minZ = -20f;
+    [SerializeField] private float maxZ = 25f;
+
+    [Header("MainLifMag X Range")]
+    [SerializeField] private float minMainX = -0.368f;
+    [SerializeField] private float maxMainX = 0.368f;
+
+    [Header("MainLifMag Y Range")]
+    [SerializeField] private float minMainY = -5.31f;
+    [SerializeField] private float maxMainY = -0.156f;
+
+    [Header("Board Contact Check")]
+    [SerializeField] private LifMagSystem lifMagSystem;
+    public LifMagSystem LifMagSystem => lifMagSystem;
+    [SerializeField] private MagnetSensor[] sensors;
+
+    [Header("Information Display")]
+    [SerializeField] private CraneInformationDisplay craneInformationDisplay;
+
+    [Header("Down Block Check")]
+    [SerializeField] private Transform downCheckOrigin;
+    [SerializeField] private Vector3 downCheckHalfExtents = new Vector3(0.35f, 0.05f, 0.35f);
+    [SerializeField] private LayerMask boardLayer;
+    [SerializeField] private float skinWidth = 0.01f;
+
+    [Header("Warning Area Lock")]
+    [SerializeField] private bool descentLockedByWarningArea = false;
+    [SerializeField] private float unlockYHeight = -2.0f;
+
+    [Header("Placement Wall Check")]
+    [SerializeField] private LayerMask downStopLayer;
+
+    [Header("Debug BoxCast Visualization")]
+    [SerializeField] private bool showDebugBoxCast = true;
+
+    [Header("CSV SpeedLogger")]
+    [SerializeField] private UIButtonCsvLogger uiButtonCsvLogger;
+
+    [Header("Warning UI")]
+    [SerializeField] private Text warningText;
+    [SerializeField] private string warningMessage =
+        "警告：板が配置禁止領域に侵入しました\n一定高さまで上昇してください";
+
+    private bool debugHasBoxCast;
+    private bool debugBoxCastHit;
+    private Vector3 debugOrigin;
+    private Vector3 debugHalfExtents;
+    private Quaternion debugRotation = Quaternion.identity;
+    private float debugCheckDistance;
+    private float debugInput;
+    private float debugMoveAmount;
+    private Vector3 debugDirection = Vector3.down;
+
+    // 既存の下降停止判定を、実作業フェーズ判定でも共有します。
+    // 同じ接触中にイベントを連続発行しないようラッチします。
+    private bool touchdownEventLatched;
+
+    public bool IsDownwardMovementBlockedByTouchdown
+    {
+        get;
+        private set;
+    }
+
+    public CraneWorkTouchdownKind LastTouchdownKind
+    {
+        get;
+        private set;
+    }
+
+    public float LastTouchdownMainLifMagLocalY
+    {
+        get;
+        private set;
+    }
+
+    public event System.Action<
+        CraneUnit,
+        CraneWorkTouchdownKind,
+        float
+    > TouchdownDetected;
+
+    private int currentJoystickZSpeedIndex = -1;
+    private int currentJoystickXSpeedIndex = -1;
+    private int currentJoystickYSpeedIndex = -1;
+
+
+    private void Start()
+    {
+        UpdateWarningUI();
+        UpdateSpeedTexts();
+    }
+
+    /// <summary>
+    /// 着床後の上昇量を、下降制御と同じMainLifMagのlocal Yで取得します。
+    /// </summary>
+    public bool TryGetMainLifMagLocalY(out float localY)
+    {
+        if (mainLifMag == null)
+        {
+            localY = 0f;
+            return false;
+        }
+
+        localY = mainLifMag.localPosition.y;
+        return true;
+    }
+
+    public void SetJoystickStepSpeedMode(bool enabled)
+    {
+        useJoystickStepSpeed = enabled;
+        UpdateSpeedTexts();
+    }
+    
+    public void UpdateSpeedTexts()
+    {
+        int displayZIndex = useJoystickStepSpeed ? currentJoystickZSpeedIndex : zSpeedIndex;
+        int displayXIndex = useJoystickStepSpeed ? currentJoystickXSpeedIndex : mainLifMagXSpeedIndex;
+        int displayYIndex = useJoystickStepSpeed ? currentJoystickYSpeedIndex : mainLifMagYSpeedIndex;
+
+        ZSpeedDisplayText = FormatSpeedDisplayText(
+            displayZIndex,
+            zSpeeds
+        );
+        MainLifMagXSpeedDisplayText = FormatSpeedDisplayText(
+            displayXIndex,
+            mainLifMagXSpeeds
+        );
+        MainLifMagYSpeedDisplayText = FormatSpeedDisplayText(
+            displayYIndex,
+            mainLifMagYSpeeds
+        );
+    }
+
+    private string FormatSpeedDisplayText(
+        int displayIndex,
+        float[] speedValues
+    )
+    {
+        if (speedValues == null || speedValues.Length == 0)
+        {
+            return "0.0 (0/0)";
+        }
+
+        if (displayIndex < 0 || displayIndex >= speedValues.Length)
+        {
+            return $"0.0 (0/{speedValues.Length})";
+        }
+
+        return
+            $"{speedValues[displayIndex]:0.###} " +
+            $"({displayIndex + 1}/{speedValues.Length})";
+    }
+
+    public void ResetSpeedLevel()
+    {
+        zSpeedIndex = 0;
+        mainLifMagXSpeedIndex = 0;
+        mainLifMagYSpeedIndex = 0;
+
+        UpdateSpeedTexts();
+    }
+
+    private int GetSpeedIndexFromJoystickInput(float input, int speedCount)
+    {
+        float absInput = Mathf.Abs(input);
+
+        if (absInput <= joystickSpeedZeroRange)
+        {
+            return -1; // 停止
+        }
+
+        float usableRange = 1.0f - joystickSpeedZeroRange;
+        float normalized = (absInput - joystickSpeedZeroRange) / usableRange;
+
+        int level = Mathf.CeilToInt(normalized * speedCount);
+        level = Mathf.Clamp(level, 1, speedCount);
+
+        return level - 1;
+    }
+
+    public void MoveMainCraneZ(float input)
+    {
+        if (!SimulatorStartManager.IsOperationEnabled) return;
+        
+        if (mainCrane == null) return;
+
+        int speedIndex = zSpeedIndex;
+
+        if (useJoystickStepSpeed)
+        {
+            speedIndex = GetSpeedIndexFromJoystickInput(input, zSpeeds.Length);
+
+            currentJoystickZSpeedIndex = speedIndex;
+            UpdateSpeedTexts();
+
+            if (speedIndex < 0)
+            {
+                return;
+            }
+        }
+
+        float speed = zSpeeds[speedIndex] / 60f;
+        Vector3 pos = mainCrane.localPosition;
+        pos.z += input * speed * Time.fixedDeltaTime;
+        pos.z = Mathf.Clamp(pos.z, minZ, maxZ);
+        mainCrane.localPosition = pos;
+    }
+
+    public void MoveMainLifMagX(float input)
+    {
+        if (!SimulatorStartManager.IsOperationEnabled) return;
+        
+        if (mainLifMag == null) return;
+
+        int speedIndex = mainLifMagXSpeedIndex;
+
+        if (useJoystickStepSpeed)
+        {
+            speedIndex = GetSpeedIndexFromJoystickInput(input, mainLifMagXSpeeds.Length);
+
+            currentJoystickXSpeedIndex = speedIndex;
+            UpdateSpeedTexts();
+
+            if (speedIndex < 0)
+            {
+                return;
+            }
+        }
+
+        float speed = mainLifMagXSpeeds[speedIndex] / 60f;
+
+        float parentScaleX = mainLifMag.parent != null ? mainLifMag.parent.lossyScale.x : 1f;
+
+        Vector3 pos = mainLifMag.localPosition;
+        pos.x += input * speed * Time.fixedDeltaTime / parentScaleX;
+        pos.x = Mathf.Clamp(pos.x, minMainX, maxMainX);
+        mainLifMag.localPosition = pos;
+    }
+
+    public void MoveMainLifMagY(float input)
+    {
+        if (!SimulatorStartManager.IsOperationEnabled) return;
+        
+        if (mainLifMag == null) return;
+
+        int speedIndex = mainLifMagYSpeedIndex;
+
+        if (useJoystickStepSpeed)
+        {
+            speedIndex = GetSpeedIndexFromJoystickInput(input, mainLifMagYSpeeds.Length);
+
+            currentJoystickYSpeedIndex = speedIndex;
+            UpdateSpeedTexts();
+
+            if (speedIndex < 0)
+            {
+                return;
+            }
+        }
+
+        float speed = mainLifMagYSpeeds[speedIndex] / 60f;
+
+        float parentScaleY = mainLifMag.parent != null ? mainLifMag.parent.lossyScale.y : 1f;
+        float moveAmount = input * speed * Time.fixedDeltaTime / parentScaleY;
+
+        Vector3 pos = mainLifMag.localPosition;
+
+        if (moveAmount > 0f)
+        {
+            // 上昇を開始したら、次回の着床通知を許可します。
+            touchdownEventLatched = false;
+            IsDownwardMovementBlockedByTouchdown = false;
+
+            if (craneInformationDisplay != null)
+            {
+                craneInformationDisplay.NotifyUpwardMovementStarted();
+            }
+        }
+
+        // 警告後、一定高さまで上がったら下降禁止解除
+        if (descentLockedByWarningArea && pos.y >= unlockYHeight)
+        {
+            descentLockedByWarningArea = false;
+            UpdateWarningUI();
+
+            Debug.Log("一定高さまで上昇したため、下降禁止を解除");
+        }
+
+        // 下降禁止中は下降入力だけ無効化する
+        if (descentLockedByWarningArea && moveAmount < 0f)
+        {
+            moveAmount = 0f;
+        }
+
+        // 毎回いったん初期化
+        debugHasBoxCast = false;
+        debugBoxCastHit = false;
+        debugInput = input;
+        debugMoveAmount = moveAmount;
+
+        // 下方向へ動くときだけ事前チェック
+        if (moveAmount < 0f)
+        {
+            bool shouldStop = false;
+            bool hasAttachedLoad =
+                lifMagSystem != null && lifMagSystem.HasAttachedBoard;
+
+            // 吸着中なら、保持板が他板に接触しているかを見る
+            if (hasAttachedLoad)
+            {
+                Debug.Log("吸着中判定ルート");
+
+                if (TryGetLowestAttachedBoardCollider(
+                        out GameObject lowestBoard,
+                        out Collider boardCol
+                    ))
+                {
+                    float checkDistance = 0.001f;
+                    Bounds b = boardCol.bounds;
+
+                    Vector3 origin = new Vector3(
+                        b.center.x,
+                        b.min.y + skinWidth,
+                        b.center.z
+                    );
+
+                    Vector3 halfExtents = new Vector3(
+                        b.extents.x * 0.95f,
+                        skinWidth,
+                        b.extents.z * 0.95f
+                    );
+
+                    Quaternion rotation = boardCol.transform.rotation;
+
+                    // 実際に使った値を保存
+                    debugHasBoxCast = true;
+                    debugOrigin = origin;
+                    debugHalfExtents = halfExtents;
+                    debugRotation = rotation;
+                    debugCheckDistance = checkDistance;
+                    debugDirection = Vector3.down;
+
+                    RaycastHit[] hits = Physics.BoxCastAll(
+                        origin,
+                        halfExtents,
+                        Vector3.down,
+                        rotation,
+                        checkDistance,
+                        boardLayer,
+                        QueryTriggerInteraction.Ignore
+                    );
+
+                    foreach (RaycastHit hit in hits)
+                    {
+                        if (hit.collider == null) continue;
+
+                        // 自分が保持している全厚板は無視します。
+                        if (IsColliderPartOfAttachedBoard(hit.collider))
+                        {
+                            continue;
+                        }
+
+                        if (HasTagOnSelfOrParent(hit.collider, "Board") ||
+                            HasTagOnSelfOrParent(hit.collider, "BoardStage"))
+                        {
+                            shouldStop = true;
+                            debugBoxCastHit = true;
+                            Debug.Log(
+                                $"吸着中：{lowestBoard.name} の下で " +
+                                $"{hit.collider.name} を検出 → 下方向停止"
+                            );
+                            break;
+                        }
+                    }
+                }
+            }
+            // 非吸着時なら、従来どおり下方向のBoxCastで見る
+            else
+            {
+                Debug.Log("非吸着BoxCastルート");
+                
+                float checkDistance = Mathf.Abs(moveAmount) + skinWidth;
+                shouldStop = false;
+
+                for (int i = 0; i < lifMags.Length; i++)
+                {
+                    if (lifMags[i] == null) continue;
+                    if (lifMags[i].downCheckOrigin == null) continue;
+
+                    Transform origin = lifMags[i].downCheckOrigin;
+
+                    // デバッグ表示用に最後に見たものを保存
+                    debugHasBoxCast = true;
+                    debugOrigin = origin.position;
+                    debugHalfExtents = downCheckHalfExtents;
+                    debugRotation = origin.rotation;
+                    debugCheckDistance = checkDistance;
+                    debugDirection = Vector3.down;
+
+                    bool hit = Physics.BoxCast(
+                        origin.position,
+                        downCheckHalfExtents,
+                        Vector3.down,
+                        out RaycastHit hitInfo,
+                        origin.rotation,
+                        checkDistance,
+                        boardLayer,
+                        QueryTriggerInteraction.Ignore
+                    );
+
+                    if (hit)
+                    {
+                        shouldStop = true;
+                        debugBoxCastHit = true;
+                        Debug.Log($"非吸着時：lif{i} が {hitInfo.collider.name} を検出 → 下方向停止");
+                        break;
+                    }
+                }
+            }
+
+            if (shouldStop)
+            {
+                moveAmount = 0f;
+
+                NotifyTouchdown(
+                    hasAttachedLoad
+                        ? CraneWorkTouchdownKind.Placement
+                        : CraneWorkTouchdownKind.Pickup
+                );
+
+                if (craneInformationDisplay != null)
+                {
+                    craneInformationDisplay.NotifyDownwardMovementStopped();
+                }
+            }
+            else
+            {
+                IsDownwardMovementBlockedByTouchdown = false;
+            }
+        }
+
+        pos.y += moveAmount;
+        pos.y = Mathf.Clamp(pos.y, minMainY, maxMainY);
+        mainLifMag.localPosition = pos;
+    }
+
+    /// <summary>
+    /// 保持中の全厚板から、Collider下面が最も低いものを取得します。
+    /// 複数枚保持・一部配置時も最下面の厚板で接触を確認します。
+    /// </summary>
+    private bool TryGetLowestAttachedBoardCollider(
+        out GameObject lowestBoard,
+        out Collider lowestCollider
+    )
+    {
+        lowestBoard = null;
+        lowestCollider = null;
+
+        if (lifMagSystem == null)
+        {
+            return false;
+        }
+
+        float lowestY = float.PositiveInfinity;
+
+        foreach (GameObject board in lifMagSystem.AttachedBoards)
+        {
+            if (board == null)
+            {
+                continue;
+            }
+
+            Collider[] colliders =
+                board.GetComponentsInChildren<Collider>(true);
+
+            foreach (Collider candidate in colliders)
+            {
+                if (candidate == null ||
+                    !candidate.enabled ||
+                    candidate.isTrigger)
+                {
+                    continue;
+                }
+
+                float candidateBottomY = candidate.bounds.min.y;
+
+                if (candidateBottomY < lowestY)
+                {
+                    lowestY = candidateBottomY;
+                    lowestBoard = board;
+                    lowestCollider = candidate;
+                }
+            }
+        }
+
+        return lowestBoard != null && lowestCollider != null;
+    }
+
+    private bool IsColliderPartOfAttachedBoard(Collider candidate)
+    {
+        if (candidate == null || lifMagSystem == null)
+        {
+            return false;
+        }
+
+        foreach (GameObject board in lifMagSystem.AttachedBoards)
+        {
+            if (board != null &&
+                candidate.transform.IsChildOf(board.transform))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool HasTagOnSelfOrParent(
+        Collider candidate,
+        string targetTag
+    )
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        Transform current = candidate.transform;
+
+        while (current != null)
+        {
+            if (current.CompareTag(targetTag))
+            {
+                return true;
+            }
+
+            current = current.parent;
+        }
+
+        return false;
+    }
+
+    private void NotifyTouchdown(CraneWorkTouchdownKind kind)
+    {
+        IsDownwardMovementBlockedByTouchdown = true;
+        LastTouchdownKind = kind;
+
+        if (!TryGetMainLifMagLocalY(
+                out float touchdownMainLifMagLocalY
+            ))
+        {
+            return;
+        }
+
+        LastTouchdownMainLifMagLocalY =
+            touchdownMainLifMagLocalY;
+
+        if (touchdownEventLatched)
+        {
+            return;
+        }
+
+        touchdownEventLatched = true;
+
+        Debug.Log(
+            $"CraneWork: TouchdownDetected, " +
+            $"Crane={name}, Kind={kind}, " +
+            $"MainLifMagLocalY={touchdownMainLifMagLocalY:F3}",
+            this
+        );
+
+        TouchdownDetected?.Invoke(
+            this,
+            kind,
+            touchdownMainLifMagLocalY
+        );
+    }
+
+    public void LockDescentByWarningArea()
+    {
+        descentLockedByWarningArea = true;
+        UpdateWarningUI();
+
+        Debug.LogWarning("警告領域に板が侵入：一定高さまで上昇するまで下降禁止");
+    }
+
+    private void UpdateWarningUI()
+    {
+        if (warningText == null) return;
+
+        warningText.text = warningMessage;
+        warningText.gameObject.SetActive(descentLockedByWarningArea);
+    }
+
+    private bool CheckLifMagDownBlocked(Transform origin, out RaycastHit hitInfo)
+    {
+        hitInfo = default;
+
+        if (origin == null) return false;
+
+        float checkDistance = 0.001f; // まずは見やすい固定値でOK
+
+        bool hit = Physics.BoxCast(
+            origin.position,
+            downCheckHalfExtents,
+            Vector3.down,
+            out hitInfo,
+            origin.rotation,
+            checkDistance,
+            boardLayer,
+            QueryTriggerInteraction.Ignore
+        );
+
+        return hit;
+    }
+
+    private bool CheckAttachedBoardsDownBlocked(float moveAmount)
+    {
+        if (lifMagSystem == null) return false;
+        if (!lifMagSystem.HasAttachedBoard) return false;
+
+        float checkDistance = Mathf.Abs(moveAmount) + skinWidth;
+
+        foreach (GameObject board in lifMagSystem.AttachedBoards)
+        {
+            if (board == null) continue;
+
+            Collider boardCol = board.GetComponent<Collider>();
+            if (boardCol == null) continue;
+
+            Bounds b = boardCol.bounds;
+
+            Vector3 origin = new Vector3(
+                b.center.x,
+                b.center.y,
+                b.center.z
+            );
+
+            Vector3 halfExtents = new Vector3(
+                b.extents.x * 0.95f,
+                b.extents.y * 0.95f,
+                b.extents.z * 0.95f
+            );
+
+            Quaternion rotation = board.transform.rotation;
+
+            // デバッグ表示用（最後に見た板の情報を保存）
+            debugHasBoxCast = true;
+            debugOrigin = origin;
+            debugHalfExtents = halfExtents;
+            debugRotation = rotation;
+            debugCheckDistance = checkDistance;
+            debugDirection = Vector3.down;
+            debugBoxCastHit = false;
+
+            RaycastHit[] hits = Physics.BoxCastAll(
+                origin,
+                halfExtents,
+                Vector3.down,
+                rotation,
+                checkDistance,
+                downStopLayer,
+                QueryTriggerInteraction.Ignore
+            );
+
+            foreach (RaycastHit hit in hits)
+            {
+                if (hit.collider == null) continue;
+
+                GameObject hitObj = hit.collider.gameObject;
+
+                // 自分が保持している板は無視
+                if (lifMagSystem.IsAttachedBoard(hitObj))
+                {
+                    continue;
+                }
+
+                // 壁・板・ステージのどれかに当たれば停止
+                debugBoxCastHit = true;
+                Debug.Log($"下降停止: 保持板 {board.name} が {hitObj.name} に接触予定");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void MoveLifMagX(int index, float input)
+    {
+        if (!SimulatorStartManager.IsOperationEnabled) return;
+        
+        if (lifMags == null || index < 0 || index >= lifMags.Length) return;
+        if (lifMags[index] == null) return;
+        if (lifMags[index].target == null) return;
+        if (!lifMags[index].movable) return;
+
+        // 板を吸着している間は、各リフマグの幅操作を禁止
+        if (lifMagSystem != null && lifMagSystem.HasAttachedBoard)
+        {
+            return;
+        }
+
+        float speed = GetLifMagSpeed(index) / 60f * 0.4515f / 0.8375f;
+
+        Vector3 pos = lifMags[index].target.localPosition;
+        pos.x += input * speed * Time.fixedDeltaTime;
+        pos.x = Mathf.Clamp(pos.x, lifMags[index].minX, lifMags[index].maxX);
+        lifMags[index].target.localPosition = pos;
+    }
+
+    private float GetLifMagSpeed(int index)
+    {
+        // lif0, lif4
+        if (index == 0 || index == 4)
+        {
+            return lifOuterSpeeds;
+        }
+
+        // lif1, lif3
+        if (index == 1 || index == 3)
+        {
+            return lifInnerSpeeds;
+        }
+
+        // lif2 は動かない前提
+        return 0f;
+    }
+
+    public void ChangeZSpeed()
+    {
+        zSpeedIndex = (zSpeedIndex + 1) % zSpeeds.Length;
+        UpdateSpeedTexts();
+        Debug.Log($"{name} MainCrane Z速度: {zSpeeds[zSpeedIndex]} m/min");
+    }
+
+    public void ChangeMainLifMagXSpeed()
+    {
+        mainLifMagXSpeedIndex = (mainLifMagXSpeedIndex + 1) % mainLifMagXSpeeds.Length;
+        UpdateSpeedTexts();
+        Debug.Log($"{name} MainLifMag X速度: {mainLifMagXSpeeds[mainLifMagXSpeedIndex]} m/min");
+    }
+
+    public void ChangeMainLifMagYSpeed()
+    {
+        mainLifMagYSpeedIndex = (mainLifMagYSpeedIndex + 1) % mainLifMagYSpeeds.Length;
+        UpdateSpeedTexts();
+        Debug.Log($"{name} MainLifMag Y速度: {mainLifMagYSpeeds[mainLifMagYSpeedIndex]} m/min");
+    }
+
+    public float CurrentMainLifMagXSpeed =>
+        mainLifMagXSpeeds[mainLifMagXSpeedIndex];
+
+    public float CurrentMainLifMagYSpeed =>
+        mainLifMagYSpeeds[mainLifMagYSpeedIndex];
+
+    public float CurrentMainCraneZSpeed =>
+        zSpeeds[zSpeedIndex];
+
+    public void IncreaseZSpeed()
+    {
+        zSpeedIndex = Mathf.Min(zSpeedIndex + 1, zSpeeds.Length - 1);
+        UpdateSpeedTexts();
+
+        if (uiButtonCsvLogger != null)
+        {
+            uiButtonCsvLogger.RecordSpeedChange(
+                "IncreaseZSpeed",
+                mainLifMagXSpeeds[mainLifMagXSpeedIndex],
+                mainLifMagYSpeeds[mainLifMagYSpeedIndex],
+                zSpeeds[zSpeedIndex]
+            );
+        }
+
+        Debug.Log($"{name} MainCrane Z速度UP: Lv.{zSpeedIndex + 1} / {zSpeeds.Length}");
+    }
+
+    public void DecreaseZSpeed()
+    {
+        zSpeedIndex = Mathf.Max(zSpeedIndex - 1, 0);
+        UpdateSpeedTexts();
+        if (uiButtonCsvLogger != null)
+        {
+            uiButtonCsvLogger.RecordSpeedChange(
+                "DecreaseZSpeed",
+                mainLifMagXSpeeds[mainLifMagXSpeedIndex],
+                mainLifMagYSpeeds[mainLifMagYSpeedIndex],
+                zSpeeds[zSpeedIndex]
+            );
+        }
+        Debug.Log($"{name} MainCrane Z速度DOWN: Lv.{zSpeedIndex + 1} / {zSpeeds.Length}");
+    }
+
+    public void IncreaseMainLifMagXSpeed()
+    {   
+        mainLifMagXSpeedIndex = Mathf.Min(mainLifMagXSpeedIndex + 1, mainLifMagXSpeeds.Length - 1);
+        UpdateSpeedTexts();
+        if (uiButtonCsvLogger != null)
+        {
+            uiButtonCsvLogger.RecordSpeedChange(
+                "IncreaseMainLifMagXSpeed",
+                mainLifMagXSpeeds[mainLifMagXSpeedIndex],
+                mainLifMagYSpeeds[mainLifMagYSpeedIndex],
+                zSpeeds[zSpeedIndex]
+            );
+        }
+        Debug.Log($"{name} MainLifMag X速度UP: Lv.{mainLifMagXSpeedIndex + 1} / {mainLifMagXSpeeds.Length}");
+    }
+
+    public void DecreaseMainLifMagXSpeed()
+    {
+        mainLifMagXSpeedIndex = Mathf.Max(mainLifMagXSpeedIndex - 1, 0);
+        UpdateSpeedTexts();
+        if (uiButtonCsvLogger != null)
+        {
+            uiButtonCsvLogger.RecordSpeedChange(
+                "DecreaseMainLifMagXSpeed",
+                mainLifMagXSpeeds[mainLifMagXSpeedIndex],
+                mainLifMagYSpeeds[mainLifMagYSpeedIndex],
+                zSpeeds[zSpeedIndex]
+            );
+        }
+        Debug.Log($"{name} MainLifMag X速度DOWN: Lv.{mainLifMagXSpeedIndex + 1} / {mainLifMagXSpeeds.Length}");
+    }
+
+    public void IncreaseMainLifMagYSpeed()
+    {
+        mainLifMagYSpeedIndex = Mathf.Min(mainLifMagYSpeedIndex + 1, mainLifMagYSpeeds.Length - 1);
+        UpdateSpeedTexts();
+        if (uiButtonCsvLogger != null)
+        {
+            uiButtonCsvLogger.RecordSpeedChange(
+                "IncreaseMainLifMagYSpeed",
+                mainLifMagXSpeeds[mainLifMagXSpeedIndex],
+                mainLifMagYSpeeds[mainLifMagYSpeedIndex],
+                zSpeeds[zSpeedIndex]
+            );
+        }
+        Debug.Log($"{name} MainLifMag Y速度UP: Lv.{mainLifMagYSpeedIndex + 1} / {mainLifMagYSpeeds.Length}");
+    }
+
+    public void DecreaseMainLifMagYSpeed()
+    {
+        mainLifMagYSpeedIndex = Mathf.Max(mainLifMagYSpeedIndex - 1, 0);
+        UpdateSpeedTexts();
+        if (uiButtonCsvLogger != null)
+        {
+            uiButtonCsvLogger.RecordSpeedChange(
+                "DecreaseMainLifMagYSpeed",
+                mainLifMagXSpeeds[mainLifMagXSpeedIndex],
+                mainLifMagYSpeeds[mainLifMagYSpeedIndex],
+                zSpeeds[zSpeedIndex]
+            );
+        }
+        Debug.Log($"{name} MainLifMag Y速度DOWN: Lv.{mainLifMagYSpeedIndex + 1} / {mainLifMagYSpeeds.Length}");
+    }
+
+    // ================================
+    // 介入開始状態の再現用
+    // ================================
+
+    /// <summary>
+    /// Crane1～6、Crane7～12のグループに合わせて、
+    /// MainCraneの操作可能Z範囲を-20～25基準で自動設定します。
+    /// </summary>
+    public void ConfigureZRangeForCraneIndex(int craneIndex)
+    {
+        int validCraneIndex = Mathf.Max(0, craneIndex);
+        int craneGroupIndex =
+            validCraneIndex / CranesPerZGroup;
+        float zOffset =
+            craneGroupIndex * CraneGroupZInterval;
+
+        minZ = BaseMinZ + zOffset;
+        maxZ = BaseMaxZ + zOffset;
+    }
+
+    public void SetInterventionPose(
+        float mainCraneLocalZ,
+        float mainLifMagLocalX,
+        float mainLifMagLocalY
+    )
+    {
+        if (mainCrane != null)
+        {
+            Vector3 cranePos = mainCrane.localPosition;
+            cranePos.z = Mathf.Clamp(mainCraneLocalZ, minZ, maxZ);
+            mainCrane.localPosition = cranePos;
+        }
+
+        if (mainLifMag != null)
+        {
+            Vector3 lifMagPos = mainLifMag.localPosition;
+            lifMagPos.x = Mathf.Clamp(mainLifMagLocalX, minMainX, maxMainX);
+            lifMagPos.y = Mathf.Clamp(mainLifMagLocalY, minMainY, maxMainY);
+            mainLifMag.localPosition = lifMagPos;
+        }
+
+        descentLockedByWarningArea = false;
+
+        currentJoystickZSpeedIndex = -1;
+        currentJoystickXSpeedIndex = -1;
+        currentJoystickYSpeedIndex = -1;
+
+        UpdateWarningUI();
+        UpdateSpeedTexts();
+    }
+
+    public void SetInterventionBoardAttached(
+        GameObject board,
+        Vector3 attachedLocalPosition,
+        Vector3 attachedLocalEuler
+    )
+    {
+        if (board == null || mainLifMag == null) return;
+
+        Rigidbody rb = board.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
+        board.SetActive(true);
+        board.transform.SetParent(mainLifMag, false);
+        board.transform.localPosition = attachedLocalPosition;
+        board.transform.localRotation = Quaternion.Euler(attachedLocalEuler);
+
+        if (lifMagSystem != null)
+        {
+            lifMagSystem.ForceAttachBoardForIntervention(board);
+        }
+    }
+
+    public void ClearInterventionBoardAttachment()
+    {
+        if (lifMagSystem != null)
+        {
+            lifMagSystem.ForceDetachAllForIntervention();
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (!showDebugBoxCast) return;
+        if (!Application.isPlaying) return;
+        if (!debugHasBoxCast) return;
+
+        Vector3 endPos = debugOrigin + debugDirection * debugCheckDistance;
+
+        Matrix4x4 oldMatrix = Gizmos.matrix;
+
+        // 開始位置
+        Gizmos.color = debugBoxCastHit ? new Color(1f, 0.5f, 0f) : Color.green;
+        Gizmos.matrix = Matrix4x4.TRS(debugOrigin, debugRotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, debugHalfExtents * 2f);
+
+        // 終了位置
+        Gizmos.color = debugBoxCastHit ? Color.red : Color.cyan;
+        Gizmos.matrix = Matrix4x4.TRS(endPos, debugRotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, debugHalfExtents * 2f);
+
+        // 移動線
+        Gizmos.matrix = Matrix4x4.identity;
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(debugOrigin, endPos);
+
+        Gizmos.matrix = oldMatrix;
+    }
+}

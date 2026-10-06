@@ -1,0 +1,9 @@
+errorType,mainCraneLocalZ,mainLifMagLocalX,mainLifMagLocalY
+ErrorA,-4,-0.2454,0
+ErrorA,6,-0.2454,0
+ErrorA,0,0.2454,0
+ErrorB,-2,-0.2454,-2
+ErrorB,-6,0.2454,-2
+ErrorB,4,0.2454,-2
+ErrorC,-15,0,0
+None,0,0,0
