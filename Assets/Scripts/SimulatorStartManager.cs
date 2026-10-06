@@ -31,8 +31,7 @@ public class SimulatorStartManager : MonoBehaviour
     [Header("Crane Position Logger")]
     [SerializeField] private CranePositionCsvLogger cranePositionLogger;
 
-    [Header("Tobii Gaze Logger")]
-    [SerializeField] private TobiiGazeCsvLogger tobiiGazeLogger;
+
 
     [Header("Work Information Logger")]
     [SerializeField] private WorkInformationCsvLogger workInformationLogger;
@@ -121,10 +120,7 @@ public class SimulatorStartManager : MonoBehaviour
             cranePositionLogger.StartLogging(inputFileName);
         }
 
-        if (tobiiGazeLogger != null)
-        {
-            tobiiGazeLogger.StartLogging(inputFileName);
-        }
+
 
         if (workInformationLogger != null)
         {
@@ -358,10 +354,6 @@ public class SimulatorStartManager : MonoBehaviour
             cranePositionLogger.StopLogging();
         }
 
-        if (tobiiGazeLogger != null)
-        {
-            tobiiGazeLogger.StopLogging();
-        }
 
         if (workInformationLogger != null)
         {
