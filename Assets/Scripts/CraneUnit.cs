@@ -11,9 +11,9 @@ public class CraneUnit : MonoBehaviour
     [SerializeField] private Transform mainLifMag;
 
     [Header("Speed [m/min]")]
-    [SerializeField] private float forwardBackSpeed = 20f;
-    [SerializeField] private float leftRightSpeed = 10.5f;
-    [SerializeField] private float upDownSpeed = 3f;
+    [SerializeField] private float forwardBackSpeed = 15f;
+    [SerializeField] private float leftRightSpeed = 15f;
+    [SerializeField] private float upDownSpeed = 15f;
 
     [Header("Movement Ranges (local position)")]
     [SerializeField] private float minZ = -20f;
