@@ -23,25 +23,37 @@ public class CraneOperationManager : MonoBehaviour
     [Tooltip("前後移動に使うInput Managerの軸名")]
     [SerializeField] private string joyStickVertical = "JoyStick2Vertical";
 
-    [Tooltip("上下移動に使うInput Managerの軸名")]
-    [SerializeField] private string joyStickLift = "JoyStick3Vertical";
+    [Header("Lift Toggle")]
+    [Tooltip("Keyboardモードで下降／上昇を切り替えるキー")]
+    [SerializeField] private KeyCode liftToggleKey = KeyCode.T;
+
+    [Tooltip("Joystickモードで下降／上昇を切り替えるボタン。初期値は1台目のButton 0（トリガー）")]
+    [SerializeField] private KeyCode joystickLiftToggleButton = KeyCode.Joystick1Button0;
+
+    private void Update()
+    {
+        if (crane == null || !crane.isActiveAndEnabled) return;
+
+        // GetKeyDownはUpdateで読み、短い押下も取りこぼさないようにする。
+        KeyCode toggleButton = inputMode == InputMode.Keyboard
+            ? liftToggleKey : joystickLiftToggleButton;
+        if (Input.GetKeyDown(toggleButton)) crane.ToggleLift();
+    }
 
     private void FixedUpdate()
     {
-        if (crane == null) return;
+        if (crane == null || !crane.isActiveAndEnabled) return;
 
         if (inputMode == InputMode.Keyboard)
         {
-            // W/S: 前後、A/D: 左右、R/F: 上下
+            // W/S: 前後、A/D: 左右。上下は押し切り替えで自動移動する。
             crane.MoveForwardBack(GetKeyboardAxis(KeyCode.W, KeyCode.S));
             crane.MoveLeftRight(GetKeyboardAxis(KeyCode.D, KeyCode.A));
-            crane.MoveUpDown(GetKeyboardAxis(KeyCode.R, KeyCode.F));
             return;
         }
 
         crane.MoveForwardBack(ReadJoystickAxis(joyStickVertical));
         crane.MoveLeftRight(ReadJoystickAxis(joyStickHorizontal));
-        crane.MoveUpDown(ReadJoystickAxis(joyStickLift));
     }
 
     private float ReadJoystickAxis(string axisName)

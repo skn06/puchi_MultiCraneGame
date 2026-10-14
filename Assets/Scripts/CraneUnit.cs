@@ -7,21 +7,56 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("前後移動させるクレーン本体のTransform")]
     [SerializeField] private Transform mainCrane;
 
-    [Tooltip("左右・上下移動させるリフマグ全体のTransform")]
+    [Tooltip("左右移動させる台車のTransform")]
     [SerializeField] private Transform mainLifMag;
 
+    [Tooltip("上下移動させるLifMag(Center)のTransform")]
+    [SerializeField] private Transform centerLifMag;
+
     [Header("Speed [m/min]")]
-    [SerializeField] private float forwardBackSpeed = 15f;
-    [SerializeField] private float leftRightSpeed = 15f;
-    [SerializeField] private float upDownSpeed = 15f;
+    [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
+    [SerializeField, Min(0f)] private float leftRightSpeed = 15f;
+    [SerializeField, Min(0f)] private float upDownSpeed = 15f;
 
     [Header("Movement Ranges (local position)")]
     [SerializeField] private float minZ = -20f;
     [SerializeField] private float maxZ = 25f;
     [SerializeField] private float minX = -0.368f;
     [SerializeField] private float maxX = 0.368f;
-    [SerializeField] private float minY = -5.31f;
-    [SerializeField] private float maxY = -0.156f;
+    [Tooltip("LifMag(Center)のローカルY座標の下限")]
+    [SerializeField] private float minY = -4.5546412f;
+    [Tooltip("LifMag(Center)のローカルY座標の上限")]
+    [SerializeField] private float maxY = -0.3034226f;
+
+    private bool liftMoving;
+    private bool movingToBottom;
+
+    // 最初の押下で下降、次の押下で上昇。移動中の押下では反転する。
+    public void ToggleLift()
+    {
+        if (centerLifMag == null) return;
+        movingToBottom = !movingToBottom;
+        liftMoving = true;
+    }
+
+    private void FixedUpdate()
+    {
+        if (!liftMoving || centerLifMag == null) return;
+
+        float targetY = movingToBottom ? minY : maxY;
+        Vector3 position = centerLifMag.localPosition;
+        float step = GetLocalStep(centerLifMag, Vector3.up, upDownSpeed);
+        position.y = Mathf.MoveTowards(position.y, targetY, step);
+        centerLifMag.localPosition = position;
+
+        // MoveTowardsで端点に正確に止める。
+        if (position.y == targetY) liftMoving = false;
+    }
+
+    private void OnDisable()
+    {
+        liftMoving = false;
+    }
 
     public void MoveForwardBack(float input)
     {
@@ -33,20 +68,27 @@ public class CraneUnit : MonoBehaviour
         Move(mainLifMag, Vector3.right, input, leftRightSpeed, minX, maxX, 0);
     }
 
-    public void MoveUpDown(float input)
-    {
-        Move(mainLifMag, Vector3.up, input, upDownSpeed, minY, maxY, 1);
-    }
-
     private static void Move(Transform target, Vector3 direction, float input,
         float speedPerMinute, float min, float max, int axis)
     {
         if (target == null || Mathf.Approximately(input, 0f)) return;
 
         Vector3 position = target.localPosition;
-        position += direction * input * (speedPerMinute / 60f) * Time.fixedDeltaTime;
+        position += direction * Mathf.Clamp(input, -1f, 1f)
+            * GetLocalStep(target, direction, speedPerMinute);
         position[axis] = Mathf.Clamp(position[axis], min, max);
         target.localPosition = position;
+    }
+
+    private static float GetLocalStep(Transform target, Vector3 direction, float speedPerMinute)
+    {
+        // 親の拡大率を補正し、1 Unity unit = 1 mとして実際の速度を指定する。
+        float worldUnitsPerLocalUnit = target.parent == null
+            ? 1f : target.parent.TransformVector(direction).magnitude;
+        if (worldUnitsPerLocalUnit <= Mathf.Epsilon) return 0f;
+
+        return Mathf.Max(0f, speedPerMinute) / 60f
+            * Time.fixedDeltaTime / worldUnitsPerLocalUnit;
     }
 
     private void OnValidate()
