@@ -8,9 +8,9 @@ Hierarchyの`MainCrane1`を選択し、`Crane Unit` → `Speed [m/min]`に直接
 
 | Inspector項目 | 方向 | シーンの設定値 |
 | --- | --- | ---: |
-| Forward Back Speed | 前後 | 20 m/min |
-| Left Right Speed | 左右 | 10.5 m/min |
-| Up Down Speed | 中央の板の上下 | 3 m/min |
+| Forward Back Speed | 前後 | 50 m/min |
+| Left Right Speed | 左右 | 50 m/min |
+| Up Down Speed | 中央の板の上下 | 15 m/min |
 
 1 Unity unit = 1 mとして、親TransformのScaleを補正して移動する。速度段階を切り替える操作はない。ジョイスティックの前後・左右は、倒した量に応じて設定速度の0～100%で動く。上下は常に指定速度で動く。0を指定するとその方向は停止する。
 
@@ -22,8 +22,8 @@ Hierarchyの`MainCrane1`を選択し、`Crane Unit` → `Speed [m/min]`に直接
 
 | 操作 | Keyboard | Joystick |
 | --- | --- | --- |
-| 前後 | W / S | JoyStick2Vertical（既存設定） |
-| 左右 | D / A | JoyStick2Horizontal（既存設定） |
+| 前後 | E / D | JoyStick2Vertical（既存設定） |
+| 左右 | S / F | JoyStick2Horizontal（既存設定） |
 | 下降／上昇の切り替え | T | 1台目のButton 0（トリガー） |
 
 上下操作は押し続ける必要がない。最初の押下で下限まで下降して停止し、次の押下で上限まで上昇して停止する。移動中に押すと方向が反転する。再生直後は元の初期位置で停止しており、最初の押下で下降する。
@@ -38,6 +38,10 @@ Hierarchyの`MainCrane1`を選択し、`Crane Unit` → `Speed [m/min]`に直接
 
 - Min Z / Max Z: MainCraneの前後範囲。
 - Min X / Max X: MainLifMagの左右範囲。
-- Min Y / Max Y: LifMag(Center)の上下範囲（ローカル座標）。
+上下範囲は`Lift Limits (local Y)`で設定する。
 
-上下範囲は、従来の板のワールド座標での到達高さを保つように換算している。リフマグ間の距離調整機能はない。シーンに残っていた削除済みの吸着・センサースクリプト参照も除去している。
+- Use Initial Position As Upper Limit: ON（初期設定）なら再生開始時の`LifMag(Center)`の位置を上限として記録する。Tキーで上昇すると、この初期位置で停止する。
+- Min Y: 下限のローカルY座標。初期位置より小さい値を指定する。上限より高い値を指定した場合は、上限位置までに制限する。
+- Max Y: チェックをOFFにした場合の上限のローカルY座標。ONの場合は使用しない。
+
+初期位置を変える場合は、再生を止めて`LifMag(Center)`のTransform → Position Yを編集してから再生する。InspectorのMin Y / Max Yはワールド座標ではなく、親`MainLifMag`を基準とする座標。リフマグ間の距離調整機能はない。シーンに残っていた削除済みの吸着・センサースクリプト参照も除去している。
