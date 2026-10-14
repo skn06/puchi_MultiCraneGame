@@ -35,9 +35,13 @@ public class CraneOperationManager : MonoBehaviour
         if (crane == null || !crane.isActiveAndEnabled) return;
 
         // GetKeyDownはUpdateで読み、短い押下も取りこぼさないようにする。
-        KeyCode toggleButton = inputMode == InputMode.Keyboard
-            ? liftToggleKey : joystickLiftToggleButton;
-        if (Input.GetKeyDown(toggleButton)) crane.ToggleLift();
+        if (inputMode == InputMode.Keyboard)
+        {
+            if (Input.GetKeyDown(liftToggleKey)) crane.ToggleLift();
+            return;
+        }
+
+        if (Input.GetKeyDown(joystickLiftToggleButton)) crane.ToggleLift();
     }
 
     private void FixedUpdate()
