@@ -46,9 +46,9 @@ public class CraneOperationManager : MonoBehaviour
 
         if (inputMode == InputMode.Keyboard)
         {
-            // W/S: 前後、A/D: 左右。上下は押し切り替えで自動移動する。
-            crane.MoveForwardBack(GetKeyboardAxis(KeyCode.W, KeyCode.S));
-            crane.MoveLeftRight(GetKeyboardAxis(KeyCode.D, KeyCode.A));
+            // E/D: 前後、S/F: 左右。上下は押し切り替えで自動移動する。
+            crane.MoveForwardBack(GetKeyboardAxis(KeyCode.E, KeyCode.D));
+            crane.MoveLeftRight(GetKeyboardAxis(KeyCode.S, KeyCode.F));
             return;
         }
 
