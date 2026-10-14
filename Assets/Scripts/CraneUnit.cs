@@ -23,24 +23,13 @@ public class CraneUnit : MonoBehaviour
     [SerializeField] private float maxZ = 25f;
     [SerializeField] private float minX = -0.368f;
     [SerializeField] private float maxX = 0.368f;
-
-    [Header("Lift Limits (local Y)")]
-    [Tooltip("ON: 再生開始時のLifMag(Center)の位置を上限にする。OFF: Max Yを上限にする")]
-    [SerializeField] private bool useInitialPositionAsUpperLimit = true;
-
-    [Tooltip("LifMag(Center)のローカルY座標の下限。上限より高い値の場合は上限位置までに制限する")]
+    [Tooltip("LifMag(Center)のローカルY座標の下限")]
     [SerializeField] private float minY = -4.5546412f;
-    [Tooltip("Use Initial Position As Upper LimitがOFFの場合に使うローカルY座標の上限")]
+    [Tooltip("LifMag(Center)のローカルY座標の上限")]
     [SerializeField] private float maxY = -0.3034226f;
 
-    private float initialLiftY;
     private bool liftMoving;
     private bool movingToBottom;
-
-    private void Awake()
-    {
-        if (centerLifMag != null) initialLiftY = centerLifMag.localPosition.y;
-    }
 
     // 最初の押下で下降、次の押下で上昇。移動中の押下では反転する。
     public void ToggleLift()
@@ -54,9 +43,7 @@ public class CraneUnit : MonoBehaviour
     {
         if (!liftMoving || centerLifMag == null) return;
 
-        float upperY = useInitialPositionAsUpperLimit ? initialLiftY : maxY;
-        float lowerY = Mathf.Min(minY, upperY);
-        float targetY = movingToBottom ? lowerY : upperY;
+        float targetY = movingToBottom ? minY : maxY;
         Vector3 position = centerLifMag.localPosition;
         float step = GetLocalStep(centerLifMag, Vector3.up, upDownSpeed);
         position.y = Mathf.MoveTowards(position.y, targetY, step);
@@ -108,7 +95,7 @@ public class CraneUnit : MonoBehaviour
     {
         if (minZ > maxZ) minZ = maxZ;
         if (minX > maxX) minX = maxX;
-        if (!useInitialPositionAsUpperLimit && minY > maxY) minY = maxY;
+        if (minY > maxY) minY = maxY;
 
         forwardBackSpeed = Mathf.Max(0f, forwardBackSpeed);
         leftRightSpeed = Mathf.Max(0f, leftRightSpeed);

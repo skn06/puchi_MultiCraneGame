@@ -1102,7 +1102,6 @@ MonoBehaviour:
   maxZ: 10
   minX: -0.368
   maxX: 0.368
-  useInitialPositionAsUpperLimit: 1
   minY: -4.55464
   maxY: -0.3039183
 --- !u!1 &1414535768
