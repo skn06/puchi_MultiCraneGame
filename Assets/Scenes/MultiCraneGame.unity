@@ -1102,8 +1102,8 @@ MonoBehaviour:
   maxZ: 10
   minX: -0.368
   maxX: 0.368
-  minY: -4.55464
-  maxY: -0.3039183
+  minY: -3
+  maxY: -1.4622
 --- !u!1 &1414535768
 GameObject:
   m_ObjectHideFlags: 0
