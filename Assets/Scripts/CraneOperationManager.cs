@@ -30,18 +30,45 @@ public class CraneOperationManager : MonoBehaviour
     [Tooltip("Joystickモードで下降／上昇を切り替えるボタン。初期値は1台目のButton 0（トリガー）")]
     [SerializeField] private KeyCode joystickLiftToggleButton = KeyCode.Joystick1Button0;
 
+    [Header("Claw Toggle")]
+
+    [Tooltip("Keyboardモードで爪を開閉するキー")]
+    [SerializeField] private KeyCode clawToggleKey = KeyCode.G;
+
+    [Tooltip("Joystickモードで爪を開閉するボタン")]
+    [SerializeField] private KeyCode joystickClawToggleButton = KeyCode.Joystick1Button1;
+
     private void Update()
     {
         if (crane == null || !crane.isActiveAndEnabled) return;
 
         // GetKeyDownはUpdateで読み、短い押下も取りこぼさないようにする。
+        // Keyboardモードでは、下降／上昇と爪の開閉をそれぞれ指定キーで切り替える。
+        // Joystickモードでは、対応するボタンで下降／上昇と爪の開閉を切り替える。
         if (inputMode == InputMode.Keyboard)
         {
-            if (Input.GetKeyDown(liftToggleKey)) crane.ToggleLift();
+            if (Input.GetKeyDown(liftToggleKey))
+            {
+                crane.ToggleLift();
+            }
+
+            if (Input.GetKeyDown(clawToggleKey))
+            {
+                crane.ToggleClaw();
+            }
+
             return;
         }
 
-        if (Input.GetKeyDown(joystickLiftToggleButton)) crane.ToggleLift();
+        if (Input.GetKeyDown(joystickLiftToggleButton))
+        {
+            crane.ToggleLift();
+        }
+
+        if (Input.GetKeyDown(joystickClawToggleButton))
+        {
+            crane.ToggleClaw();
+        }
     }
 
     private void FixedUpdate()

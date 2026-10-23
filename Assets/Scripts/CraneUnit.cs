@@ -13,6 +13,9 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("上下移動させるLifMag(Center)のTransform")]
     [SerializeField] private Transform centerLifMag;
 
+    [Tooltip("爪の開閉を制御するCraneClaw")]
+    [SerializeField] private CraneClaw claw;
+
     [Header("Speed [m/min]")]
     [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
     [SerializeField, Min(0f)] private float leftRightSpeed = 15f;
@@ -37,6 +40,14 @@ public class CraneUnit : MonoBehaviour
         if (centerLifMag == null) return;
         movingToBottom = !movingToBottom;
         liftMoving = true;
+    }
+
+    //最初の押下で爪を閉じ，次の押下で開く．
+    public void ToggleClaw()
+    {
+    if (claw == null) return;
+
+    claw.Toggle();
     }
 
     private void FixedUpdate()
