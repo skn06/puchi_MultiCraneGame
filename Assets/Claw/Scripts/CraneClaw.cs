@@ -50,6 +50,30 @@ public class CraneClaw : MonoBehaviour
         target.localRotation = Quaternion.Euler(0f, newY, 0f);
     }
 
+    public bool IsMoving
+    
+    {
+        get
+        {
+            float target1 = isClosed ? claw1ClosedY : claw1OpenY;
+            float target2 = isClosed ? claw2ClosedY : claw2OpenY;
+            float target3 = isClosed ? claw3ClosedY : claw3OpenY;
+
+            return !IsAtTarget(claw1Rotate, target1)
+                || !IsAtTarget(claw2Rotate, target2)
+                || !IsAtTarget(claw3Rotate, target3);
+        }
+    }
+
+    private bool IsAtTarget(Transform target, float targetY)
+    {
+        if (target == null) return true;
+
+        return Mathf.Abs(
+            Mathf.DeltaAngle(target.localEulerAngles.y, targetY)
+        ) < 0.1f;
+    }
+
     public void Toggle()
     {
         isClosed = !isClosed;
