@@ -25,6 +25,9 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("景品取得結果の文字表示を制御する")]
     [SerializeField] private CraneResultDisplay resultDisplay;
 
+    [Tooltip("取得景品を結果画面中央に表示する")]
+    [SerializeField] private PrizeResultPresenter prizeResultPresenter;
+
     [Header("Speed [m/min]")]
     [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
     [SerializeField, Min(0f)] private float leftRightSpeed = 15f;
@@ -46,6 +49,9 @@ public class CraneUnit : MonoBehaviour
 
     [Tooltip("取出口到着後、爪を開き始めるまでの待ち時間 [秒]")]
     [SerializeField, Min(0f)] private float beforeReleaseDelay = 1f;
+
+    [Tooltip("PRIZE GET!表示後、景品を中央表示するまでの待ち時間 [秒]")]
+    [SerializeField, Min(0f)] private float beforePrizeDisplayDelay = 1.5f;
 
     [Header("Movement Ranges (local position)")]
     [SerializeField] private float minZ = -20f;
@@ -80,7 +86,11 @@ public class CraneUnit : MonoBehaviour
         WaitingBeforeMoveToDropPoint,
         MovingToDropPoint,
         WaitingBeforeRelease,
-        OpeningAtDropPoint
+        OpeningAtDropPoint,
+        WaitingForPrizeDetection,
+        WaitingBeforePrizeDisplay,
+        ReturningHome,
+        ResultComplete
     }
 
     private CraneState state = CraneState.Idle;
@@ -90,6 +100,13 @@ public class CraneUnit : MonoBehaviour
     private float remainingPlayTime;
     private bool playTimerRunning;
 
+    // ゲーム開始時のクレーン位置。
+    private float initialMainCraneZ;
+    private float initialMainLifMagX;
+
+    // 取得した景品。
+    private Rigidbody detectedPrize;
+
     // UI表示用に現在の残り時間を取得できるようにする。
     public float RemainingPlayTime => remainingPlayTime;
 
@@ -97,6 +114,22 @@ public class CraneUnit : MonoBehaviour
     // ゲーム開始時に操作制限時間のカウントを開始する。
     private void Start()
     {
+        // 起動時の位置をクレーンの初期位置として保存する。
+        if (mainCrane != null)
+        {
+            initialMainCraneZ = mainCrane.localPosition.z;
+        }
+
+        if (mainLifMag != null)
+        {
+            initialMainLifMagX = mainLifMag.localPosition.x;
+        }
+
+        if (resultDisplay != null)
+        {
+            resultDisplay.Hide();
+        }
+
         ResetPlayTimer();
     }
 
@@ -363,13 +396,82 @@ public class CraneUnit : MonoBehaviour
 
             case CraneState.OpeningAtDropPoint:
 
-                // 爪が完全に開くまでは前後左右の操作を再開しない。
+                // 爪が完全に開いたら、景品が取出口へ入るのを待つ。
                 if (claw == null || !claw.IsMoving)
                 {
-                    state = CraneState.Idle;
+                    state = CraneState.WaitingForPrizeDetection;
                 }
 
-                break;                
+                break;
+
+            case CraneState.WaitingForPrizeDetection:
+
+                // PrizeExitTriggerから通知が来るまで待機する。
+                break;
+
+            case CraneState.WaitingBeforePrizeDisplay:
+
+                stateTimer -= Time.fixedDeltaTime;
+
+                if (stateTimer <= 0f)
+                {
+                    // 景品を画面中央へ表示する。
+                    if (prizeResultPresenter != null && detectedPrize != null)
+                    {
+                        prizeResultPresenter.ShowPrize(detectedPrize);
+                    }
+
+                    // 同時にPRIZE GET!を景品と重ならない位置へ移動する。
+                    if (resultDisplay != null)
+                    {
+                        resultDisplay.MoveForPrizeDisplay();
+                    }
+
+                    // 同時にクレーンの初期位置への復帰を開始する。
+                    state = CraneState.ReturningHome;
+                }
+
+                break;
+
+            case CraneState.ReturningHome:
+
+                Vector3 returnCranePosition = mainCrane.localPosition;
+                Vector3 returnLifMagPosition = mainLifMag.localPosition;
+
+                float returnForwardBackStep =
+                    GetLocalStep(mainCrane, Vector3.forward, forwardBackSpeed);
+
+                float returnLeftRightStep =
+                    GetLocalStep(mainLifMag, Vector3.right, leftRightSpeed);
+
+                returnCranePosition.z = Mathf.MoveTowards(
+                    returnCranePosition.z,
+                    initialMainCraneZ,
+                    returnForwardBackStep
+                );
+
+                returnLifMagPosition.x = Mathf.MoveTowards(
+                    returnLifMagPosition.x,
+                    initialMainLifMagX,
+                    returnLeftRightStep
+                );
+
+                mainCrane.localPosition = returnCranePosition;
+                mainLifMag.localPosition = returnLifMagPosition;
+
+                // 前後・左右ともゲーム開始時の位置へ戻ったら停止する。
+                if (Mathf.Approximately(returnCranePosition.z, initialMainCraneZ)
+                    && Mathf.Approximately(returnLifMagPosition.x, initialMainLifMagX))
+                {
+                    state = CraneState.ResultComplete;
+                }
+
+                break;
+
+            case CraneState.ResultComplete:
+
+                // 結果画面を表示したまま待機する。
+                break;               
         }
     }
     
@@ -414,17 +516,27 @@ public class CraneUnit : MonoBehaviour
         }
     }
 
-    // 景品が取出口に入ったとき、取得成功として結果を表示する。
+    // 景品が取出口へ入ったら取得成功を表示する。
     public void NotifyPrizeDetected(Rigidbody prize)
     {
         if (prize == null) return;
 
+        // 同じ景品を二重に判定しない。
+        if (detectedPrize != null) return;
+
+        detectedPrize = prize;
+
+        // まずPRIZE GET!だけを表示する。
         if (resultDisplay != null)
         {
             resultDisplay.ShowSuccess();
         }
-    }
 
+        // 少し待ってから景品表示・文字移動・初期位置復帰を同時に行う。
+        state = CraneState.WaitingBeforePrizeDisplay;
+        stateTimer = beforePrizeDisplayDelay;
+    }
+    
     private void OnDisable()
     {
         state = CraneState.Idle;

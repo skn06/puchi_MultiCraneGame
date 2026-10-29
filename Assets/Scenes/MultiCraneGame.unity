@@ -1498,7 +1498,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 10.057069, z: 19.937939}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1624748542}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2643,6 +2644,7 @@ MonoBehaviour:
   prizeGrabber: {fileID: 919132149032648402}
   prizeDropPoint: {fileID: 1626066043}
   resultDisplay: {fileID: 1917835450}
+  prizeResultPresenter: {fileID: 1624748543}
   forwardBackSpeed: 50
   leftRightSpeed: 50
   upDownSpeed: 100
@@ -2651,6 +2653,7 @@ MonoBehaviour:
   afterCloseDelay: 1
   beforeMoveToDropDelay: 1
   beforeReleaseDelay: 1
+  beforePrizeDisplayDelay: 1.5
   minZ: -3.5
   maxZ: 3.5
   minX: -0.185
@@ -3332,6 +3335,52 @@ MonoBehaviour:
   axis4: JoyStick3Vertical
   axis5: JoyStick2Slider
   logThreshold: 0.1
+--- !u!1 &1624748541
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1624748542}
+  - component: {fileID: 1624748543}
+  m_Layer: 0
+  m_Name: PrizeResultPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1624748542
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1624748541}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 622769581}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1624748543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1624748541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a37b67d4e8b20a4c82c3da3a4615787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  displayScale: 1
+  displayRotation: {x: 0, y: 0, z: 0}
 --- !u!1 &1626066042
 GameObject:
   m_ObjectHideFlags: 0
@@ -3993,6 +4042,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resultText: {fileID: 1366473074}
+  prizeDisplayTextPosition: {x: 0, y: 300}
 --- !u!1 &1944899309
 GameObject:
   m_ObjectHideFlags: 0
