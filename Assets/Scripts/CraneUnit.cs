@@ -22,6 +22,9 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("上昇後にクレーンが移動する取出口上の目標位置")]
     [SerializeField] private Transform prizeDropPoint;
 
+    [Tooltip("景品取得結果の文字表示を制御する")]
+    [SerializeField] private CraneResultDisplay resultDisplay;
+
     [Header("Speed [m/min]")]
     [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
     [SerializeField, Min(0f)] private float leftRightSpeed = 15f;
@@ -408,6 +411,17 @@ public class CraneUnit : MonoBehaviour
         if (claw != null)
         {
             claw.Close();
+        }
+    }
+
+    // 景品が取出口に入ったとき、取得成功として結果を表示する。
+    public void NotifyPrizeDetected(Rigidbody prize)
+    {
+        if (prize == null) return;
+
+        if (resultDisplay != null)
+        {
+            resultDisplay.ShowSuccess();
         }
     }
 
