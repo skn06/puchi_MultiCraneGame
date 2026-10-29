@@ -38,6 +38,12 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("爪が閉じてから上昇を始めるまでの待ち時間 [秒]")]
     [SerializeField, Min(0f)] private float afterCloseDelay = 0.7f;
 
+    [Tooltip("上昇完了後、取出口へ移動を始めるまでの待ち時間 [秒]")]
+    [SerializeField, Min(0f)] private float beforeMoveToDropDelay = 1f;
+
+    [Tooltip("取出口到着後、爪を開き始めるまでの待ち時間 [秒]")]
+    [SerializeField, Min(0f)] private float beforeReleaseDelay = 1f;
+
     [Header("Movement Ranges (local position)")]
     [SerializeField] private float minZ = -20f;
     [SerializeField] private float maxZ = 25f;
@@ -57,6 +63,9 @@ public class CraneUnit : MonoBehaviour
     // WaitingBeforeAscending: 爪が閉じた後の待機
     // Ascending: 自動上昇中
     // MovingToDropPoint: 上昇後、取出口の上へ自動移動中
+    // WaitingBeforeMoveToDropPoint: 上昇完了後、取出口へ移動する前の待機
+    // WaitingBeforeRelease: 取出口到着後、爪を開くまで待機中
+    // OpeningAtDropPoint: 取出口で爪を開いている途中
     private enum CraneState
     {
         Idle,
@@ -65,7 +74,10 @@ public class CraneUnit : MonoBehaviour
         Closing,
         WaitingBeforeAscending,
         Ascending,
-        MovingToDropPoint
+        WaitingBeforeMoveToDropPoint,
+        MovingToDropPoint,
+        WaitingBeforeRelease,
+        OpeningAtDropPoint
     }
 
     private CraneState state = CraneState.Idle;
@@ -148,7 +160,8 @@ public class CraneUnit : MonoBehaviour
         claw.Toggle();
     }
 
-    // 降下 → 待機 → 爪を閉じる → 待機 → 上昇、の自動動作を状態に応じて実行する。
+    // 降下 → 待機 → 爪を閉じる → 待機 → 上昇 → 取出口へ移動
+    // → 待機 → 爪を開いて景品を解放、の自動動作を状態に応じて実行する。
     private void FixedUpdate()
     {
         if (centerLifMag == null) return;
@@ -230,12 +243,24 @@ public class CraneUnit : MonoBehaviour
 
                 centerLifMag.localPosition = position;
 
-                // 最上部まで戻ったら、取出口の上へ自動移動する。
+                // 最上部まで戻ったら、少し待ってから取出口へ移動する。
                 if (Mathf.Approximately(position.y, maxY))
+                {
+                    state = CraneState.WaitingBeforeMoveToDropPoint;
+                    stateTimer = beforeMoveToDropDelay;
+                }
+            
+                break;
+
+            case CraneState.WaitingBeforeMoveToDropPoint:
+
+                stateTimer -= Time.fixedDeltaTime;
+
+                if (stateTimer <= 0f)
                 {
                     state = CraneState.MovingToDropPoint;
                 }
-            
+
                 break;
 
             case CraneState.MovingToDropPoint:
@@ -299,14 +324,49 @@ public class CraneUnit : MonoBehaviour
                 mainCrane.localPosition = mainCranePosition;
                 mainLifMag.localPosition = mainLifMagPosition;
 
-                // 前後・左右とも取出口の位置に到着したら停止する。
+                // 前後・左右とも取出口に到着したら、
+                // 少し待ってから爪を開く。
                 if (Mathf.Approximately(mainCranePosition.z, targetZ)
                     && Mathf.Approximately(mainLifMagPosition.x, targetX))
+                {
+                    state = CraneState.WaitingBeforeRelease;
+                    stateTimer = beforeReleaseDelay;
+                }
+
+                break;
+
+            case CraneState.WaitingBeforeRelease:
+
+                stateTimer -= Time.fixedDeltaTime;
+
+                if (stateTimer <= 0f)
+                {
+                    // 取出口で爪を開き始める。
+                    if (claw != null)
+                    {
+                        claw.Open();
+                    }
+
+                    // 保持している景品を解放し、重力で取出口へ落下させる。
+                    if (prizeGrabber != null)
+                    {
+                        prizeGrabber.Release();
+                    }
+
+                    state = CraneState.OpeningAtDropPoint;
+                }
+
+                break;
+
+            case CraneState.OpeningAtDropPoint:
+
+                // 爪が完全に開くまでは前後左右の操作を再開しない。
+                if (claw == null || !claw.IsMoving)
                 {
                     state = CraneState.Idle;
                 }
 
-                break;
+                break;                
         }
     }
     
