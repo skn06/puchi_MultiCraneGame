@@ -37,4 +37,11 @@ public class PrizeExitDetector : MonoBehaviour
             crane.NotifyPrizeDetected(prize);
         }
     }
+
+    // 次のゲームで再び景品を判定できる状態に戻す。
+    public void ResetDetection()
+    {
+        StopAllCoroutines();
+        prizeDetected = false;
+    }
 }

@@ -28,6 +28,12 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("取得景品を結果画面中央に表示する")]
     [SerializeField] private PrizeResultPresenter prizeResultPresenter;
 
+    [Tooltip("取出口の景品判定Trigger")]
+    [SerializeField] private PrizeExitDetector prizeExitDetector;
+
+    [Tooltip("次のゲーム開始時に初期位置へ戻す景品")]
+    [SerializeField] private Rigidbody prizeForReset;
+
     [Header("Speed [m/min]")]
     [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
     [SerializeField, Min(0f)] private float leftRightSpeed = 15f;
@@ -52,6 +58,9 @@ public class CraneUnit : MonoBehaviour
 
     [Tooltip("PRIZE GET!表示後、景品を中央表示するまでの待ち時間 [秒]")]
     [SerializeField, Min(0f)] private float beforePrizeDisplayDelay = 1.5f;
+
+    [Tooltip("景品を離してから失敗と判定するまでの待ち時間 [秒]")]
+    [SerializeField, Min(0f)] private float prizeDetectionTimeout = 5f;
 
     [Header("Movement Ranges (local position)")]
     [SerializeField] private float minZ = -20f;
@@ -107,6 +116,16 @@ public class CraneUnit : MonoBehaviour
     // 取得した景品。
     private Rigidbody detectedPrize;
 
+    // 次のゲーム開始時に景品を元へ戻すための初期状態。
+    private Transform prizeInitialParent;
+    private Vector3 prizeInitialLocalPosition;
+    private Quaternion prizeInitialLocalRotation;
+    private Vector3 prizeInitialLocalScale;
+
+    private bool prizeInitialUseGravity;
+    private bool prizeInitialIsKinematic;
+    private bool prizeInitialDetectCollisions;
+
     // UI表示用に現在の残り時間を取得できるようにする。
     public float RemainingPlayTime => remainingPlayTime;
 
@@ -114,7 +133,7 @@ public class CraneUnit : MonoBehaviour
     // ゲーム開始時に操作制限時間のカウントを開始する。
     private void Start()
     {
-        // 起動時の位置をクレーンの初期位置として保存する。
+        // 起動時のクレーン位置を初期位置として保存する。
         if (mainCrane != null)
         {
             initialMainCraneZ = mainCrane.localPosition.z;
@@ -125,9 +144,24 @@ public class CraneUnit : MonoBehaviour
             initialMainLifMagX = mainLifMag.localPosition.x;
         }
 
+        // 景品の初期配置と物理状態を保存する。
+        if (prizeForReset != null)
+        {
+            Transform prizeTransform = prizeForReset.transform;
+
+            prizeInitialParent = prizeTransform.parent;
+            prizeInitialLocalPosition = prizeTransform.localPosition;
+            prizeInitialLocalRotation = prizeTransform.localRotation;
+            prizeInitialLocalScale = prizeTransform.localScale;
+
+            prizeInitialUseGravity = prizeForReset.useGravity;
+            prizeInitialIsKinematic = prizeForReset.isKinematic;
+            prizeInitialDetectCollisions = prizeForReset.detectCollisions;
+        }
+
         if (resultDisplay != null)
         {
-            resultDisplay.Hide();
+            resultDisplay.HideAll();
         }
 
         ResetPlayTimer();
@@ -137,6 +171,14 @@ public class CraneUnit : MonoBehaviour
     // の自動動作を状態に応じて実行する。
     private void Update()
     {
+        // 結果画面でSpaceを押したら次のゲームへ進む。
+        if (state == CraneState.ResultComplete
+            && Input.GetKeyDown(KeyCode.Space))
+        {
+            StartNextGame();
+            return;
+        }
+
         if (!playTimerRunning) return;
         if (state != CraneState.Idle) return;
 
@@ -400,13 +442,26 @@ public class CraneUnit : MonoBehaviour
                 if (claw == null || !claw.IsMoving)
                 {
                     state = CraneState.WaitingForPrizeDetection;
+                    stateTimer = prizeDetectionTimeout;
                 }
 
                 break;
 
             case CraneState.WaitingForPrizeDetection:
 
-                // PrizeExitTriggerから通知が来るまで待機する。
+                stateTimer -= Time.fixedDeltaTime;
+
+                // 制限時間内に景品が検出されなければ失敗とする。
+                if (stateTimer <= 0f)
+                {
+                    if (resultDisplay != null)
+                    {
+                        resultDisplay.ShowFailure();
+                    }
+
+                    state = CraneState.ReturningHome;
+                }
+
                 break;
 
             case CraneState.WaitingBeforePrizeDisplay:
@@ -464,6 +519,12 @@ public class CraneUnit : MonoBehaviour
                     && Mathf.Approximately(returnLifMagPosition.x, initialMainLifMagX))
                 {
                     state = CraneState.ResultComplete;
+
+                    // クレーンが初期位置へ戻ったら次ゲームへの案内を表示する。
+                    if (resultDisplay != null)
+                    {
+                        resultDisplay.ShowNextGamePrompt();
+                    }
                 }
 
                 break;
@@ -521,22 +582,75 @@ public class CraneUnit : MonoBehaviour
     {
         if (prize == null) return;
 
-        // 同じ景品を二重に判定しない。
+        // すでに結果処理へ進んでいる場合は無視する。
         if (detectedPrize != null) return;
+
+        // 景品を落としている最中以外の誤判定を防ぐ。
+        if (state != CraneState.OpeningAtDropPoint
+            && state != CraneState.WaitingForPrizeDetection)
+        {
+            return;
+        }
 
         detectedPrize = prize;
 
-        // まずPRIZE GET!だけを表示する。
         if (resultDisplay != null)
         {
             resultDisplay.ShowSuccess();
         }
 
-        // 少し待ってから景品表示・文字移動・初期位置復帰を同時に行う。
         state = CraneState.WaitingBeforePrizeDisplay;
         stateTimer = beforePrizeDisplayDelay;
     }
-    
+
+    // 結果画面でSpaceが押されたら、すべてを初期状態へ戻して次のゲームを開始する。
+    private void StartNextGame()
+    {
+        if (resultDisplay != null)
+        {
+            resultDisplay.HideAll();
+        }
+
+        if (prizeExitDetector != null)
+        {
+            prizeExitDetector.ResetDetection();
+        }
+
+        ResetPrizeToInitialPosition();
+
+        detectedPrize = null;
+        stateTimer = 0f;
+        state = CraneState.Idle;
+
+        ResetPlayTimer();
+    }
+
+    // 景品をゲーム開始時の位置・物理状態へ戻す。
+    private void ResetPrizeToInitialPosition()
+    {
+        if (prizeForReset == null) return;
+
+        Transform prizeTransform = prizeForReset.transform;
+
+        prizeForReset.velocity = Vector3.zero;
+        prizeForReset.angularVelocity = Vector3.zero;
+
+        // 移動中に物理演算が干渉しないよう一時的に停止する。
+        prizeForReset.isKinematic = true;
+        prizeForReset.detectCollisions = false;
+
+        prizeTransform.SetParent(prizeInitialParent, false);
+        prizeTransform.localPosition = prizeInitialLocalPosition;
+        prizeTransform.localRotation = prizeInitialLocalRotation;
+        prizeTransform.localScale = prizeInitialLocalScale;
+
+        Physics.SyncTransforms();
+
+        prizeForReset.detectCollisions = prizeInitialDetectCollisions;
+        prizeForReset.useGravity = prizeInitialUseGravity;
+        prizeForReset.isKinematic = prizeInitialIsKinematic;
+    }
+
     private void OnDisable()
     {
         state = CraneState.Idle;
