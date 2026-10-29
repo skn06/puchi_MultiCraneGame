@@ -16,10 +16,17 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("爪の開閉を制御するCraneClaw")]
     [SerializeField] private CraneClaw claw;
 
+    [Tooltip("景品の保持・解放を制御するPrizeGrabber")]
+    [SerializeField] private PrizeGrabber prizeGrabber;
+
     [Header("Speed [m/min]")]
     [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
     [SerializeField, Min(0f)] private float leftRightSpeed = 15f;
     [SerializeField, Min(0f)] private float upDownSpeed = 15f;
+
+    [Header("Play Settings")]
+    [Tooltip("前後左右を操作できる制限時間 [秒]")]
+    [SerializeField, Min(0f)] private float playTimeLimit = 15f;
 
     [Header("Operation Delays")]
     [Tooltip("降下停止から爪を閉じ始めるまでの待ち時間 [秒]")]
@@ -60,6 +67,34 @@ public class CraneUnit : MonoBehaviour
 
     private float stateTimer = 0f;
 
+    private float remainingPlayTime;
+    private bool playTimerRunning;
+
+    // UI表示用に現在の残り時間を取得できるようにする。
+    public float RemainingPlayTime => remainingPlayTime;
+
+
+    // ゲーム開始時に操作制限時間のカウントを開始する。
+    private void Start()
+    {
+        ResetPlayTimer();
+    }
+
+    // 通常操作中だけ制限時間を減らし、0秒になったら強制的に降下を開始する。
+    private void Update()
+    {
+        if (!playTimerRunning) return;
+        if (state != CraneState.Idle) return;
+
+        remainingPlayTime -= Time.deltaTime;
+
+        if (remainingPlayTime <= 0f)
+        {
+            remainingPlayTime = 0f;
+            BeginDescending();
+        }
+    }
+
     // 降下・待機・爪の開閉・上昇など、自動動作中は前後左右の移動を禁止する。
     private bool IsOperationLocked
     {
@@ -79,10 +114,10 @@ public class CraneUnit : MonoBehaviour
         // 爪が開閉途中ならTは受け付けない。
         if (claw != null && claw.IsMoving) return;
 
-        // 待機中にTを押したら降下開始。
+        // 待機中にTを押したら、制限時間を終了して降下開始。
         if (state == CraneState.Idle)
         {
-            state = CraneState.Descending;
+            BeginDescending();
             return;
         }
 
@@ -153,9 +188,15 @@ public class CraneUnit : MonoBehaviour
 
             case CraneState.Closing:
 
-                // 爪が完全に閉じ終わったら、少し待ってから上昇する。
+                // 爪が閉じ終わった時点で、2本以上の爪が
+                // 同じ景品に触れていればその景品を保持する。
                 if (claw == null || !claw.IsMoving)
                 {
+                    if (prizeGrabber != null)
+                    {
+                        prizeGrabber.TryGrab();
+                    }
+
                     state = CraneState.WaitingBeforeAscending;
                     stateTimer = afterCloseDelay;
                 }
@@ -192,6 +233,29 @@ public class CraneUnit : MonoBehaviour
                 break;
         }
     }
+    
+    // 操作時間を終了し、現在位置から自動降下を開始する。
+    private void BeginDescending()
+    {
+        if (state != CraneState.Idle) return;
+
+        playTimerRunning = false;
+
+        // 降下開始時は爪を開いた状態にする。
+        if (claw != null)
+        {
+            claw.Open();
+        }
+
+        state = CraneState.Descending;
+    }
+
+    // 制限時間を初期値に戻し、操作時間のカウントを開始する。
+    private void ResetPlayTimer()
+    {
+        remainingPlayTime = playTimeLimit;
+        playTimerRunning = true;
+    }
 
     // 降下を停止し、爪を閉じるまでの待機を開始する。
     private void BeginWaitingBeforeClose()
@@ -215,6 +279,7 @@ public class CraneUnit : MonoBehaviour
     {
         state = CraneState.Idle;
         stateTimer = 0f;
+        playTimerRunning = false;
     }
 
     // 通常状態のときだけ前後移動を許可する。
