@@ -31,8 +31,8 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("取出口の景品判定Trigger")]
     [SerializeField] private PrizeExitDetector prizeExitDetector;
 
-    [Tooltip("次のゲーム開始時に初期位置へ戻す景品")]
-    [SerializeField] private Rigidbody prizeForReset;
+    [Tooltip("複数景品の配置とリセットを管理する")]
+    [SerializeField] private PrizeManager prizeManager;
 
     [Header("Speed [m/min]")]
     [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
@@ -116,16 +116,6 @@ public class CraneUnit : MonoBehaviour
     // 取得した景品。
     private Rigidbody detectedPrize;
 
-    // 次のゲーム開始時に景品を元へ戻すための初期状態。
-    private Transform prizeInitialParent;
-    private Vector3 prizeInitialLocalPosition;
-    private Quaternion prizeInitialLocalRotation;
-    private Vector3 prizeInitialLocalScale;
-
-    private bool prizeInitialUseGravity;
-    private bool prizeInitialIsKinematic;
-    private bool prizeInitialDetectCollisions;
-
     // UI表示用に現在の残り時間を取得できるようにする。
     public float RemainingPlayTime => remainingPlayTime;
 
@@ -142,21 +132,6 @@ public class CraneUnit : MonoBehaviour
         if (mainLifMag != null)
         {
             initialMainLifMagX = mainLifMag.localPosition.x;
-        }
-
-        // 景品の初期配置と物理状態を保存する。
-        if (prizeForReset != null)
-        {
-            Transform prizeTransform = prizeForReset.transform;
-
-            prizeInitialParent = prizeTransform.parent;
-            prizeInitialLocalPosition = prizeTransform.localPosition;
-            prizeInitialLocalRotation = prizeTransform.localRotation;
-            prizeInitialLocalScale = prizeTransform.localScale;
-
-            prizeInitialUseGravity = prizeForReset.useGravity;
-            prizeInitialIsKinematic = prizeForReset.isKinematic;
-            prizeInitialDetectCollisions = prizeForReset.detectCollisions;
         }
 
         if (resultDisplay != null)
@@ -616,39 +591,17 @@ public class CraneUnit : MonoBehaviour
             prizeExitDetector.ResetDetection();
         }
 
-        ResetPrizeToInitialPosition();
+        // 全景品を新しいランダム位置へ再配置する。
+        if (prizeManager != null)
+        {
+            prizeManager.ResetAndRandomizePrizes();
+        }
 
         detectedPrize = null;
         stateTimer = 0f;
         state = CraneState.Idle;
 
         ResetPlayTimer();
-    }
-
-    // 景品をゲーム開始時の位置・物理状態へ戻す。
-    private void ResetPrizeToInitialPosition()
-    {
-        if (prizeForReset == null) return;
-
-        Transform prizeTransform = prizeForReset.transform;
-
-        prizeForReset.velocity = Vector3.zero;
-        prizeForReset.angularVelocity = Vector3.zero;
-
-        // 移動中に物理演算が干渉しないよう一時的に停止する。
-        prizeForReset.isKinematic = true;
-        prizeForReset.detectCollisions = false;
-
-        prizeTransform.SetParent(prizeInitialParent, false);
-        prizeTransform.localPosition = prizeInitialLocalPosition;
-        prizeTransform.localRotation = prizeInitialLocalRotation;
-        prizeTransform.localScale = prizeInitialLocalScale;
-
-        Physics.SyncTransforms();
-
-        prizeForReset.detectCollisions = prizeInitialDetectCollisions;
-        prizeForReset.useGravity = prizeInitialUseGravity;
-        prizeForReset.isKinematic = prizeInitialIsKinematic;
     }
 
     private void OnDisable()
