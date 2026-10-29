@@ -19,6 +19,9 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("景品の保持・解放を制御するPrizeGrabber")]
     [SerializeField] private PrizeGrabber prizeGrabber;
 
+    [Tooltip("上昇後にクレーンが移動する取出口上の目標位置")]
+    [SerializeField] private Transform prizeDropPoint;
+
     [Header("Speed [m/min]")]
     [SerializeField, Min(0f)] private float forwardBackSpeed = 15f;
     [SerializeField, Min(0f)] private float leftRightSpeed = 15f;
@@ -53,6 +56,7 @@ public class CraneUnit : MonoBehaviour
     // Closing: 爪を閉じている途中
     // WaitingBeforeAscending: 爪が閉じた後の待機
     // Ascending: 自動上昇中
+    // MovingToDropPoint: 上昇後、取出口の上へ自動移動中
     private enum CraneState
     {
         Idle,
@@ -60,7 +64,8 @@ public class CraneUnit : MonoBehaviour
         WaitingBeforeClose,
         Closing,
         WaitingBeforeAscending,
-        Ascending
+        Ascending,
+        MovingToDropPoint
     }
 
     private CraneState state = CraneState.Idle;
@@ -80,7 +85,8 @@ public class CraneUnit : MonoBehaviour
         ResetPlayTimer();
     }
 
-    // 通常操作中だけ制限時間を減らし、0秒になったら強制的に降下を開始する。
+    // 降下 → 待機 → 爪を閉じる → 待機 → 上昇 → 取出口へ移動、
+    // の自動動作を状態に応じて実行する。
     private void Update()
     {
         if (!playTimerRunning) return;
@@ -224,12 +230,82 @@ public class CraneUnit : MonoBehaviour
 
                 centerLifMag.localPosition = position;
 
-                // 最上部まで戻ったら通常操作に戻る。
+                // 最上部まで戻ったら、取出口の上へ自動移動する。
                 if (Mathf.Approximately(position.y, maxY))
+                {
+                    state = CraneState.MovingToDropPoint;
+                }
+            
+                break;
+
+            case CraneState.MovingToDropPoint:
+
+                if (prizeDropPoint == null
+                    || mainCrane == null
+                    || mainLifMag == null)
+                {
+                    state = CraneState.Idle;
+                    break;
+                }
+
+                // PrizeDropPointのワールド座標を、
+                // 各移動対象が使用しているローカル座標へ変換する。
+                Vector3 mainCraneTargetLocal =
+                    mainCrane.parent != null
+                        ? mainCrane.parent.InverseTransformPoint(prizeDropPoint.position)
+                        : prizeDropPoint.position;
+
+                Vector3 mainLifMagTargetLocal =
+                    mainLifMag.parent != null
+                        ? mainLifMag.parent.InverseTransformPoint(prizeDropPoint.position)
+                        : prizeDropPoint.position;
+
+                // 通常の移動範囲を超えないように目標位置を制限する。
+                float targetZ = Mathf.Clamp(
+                    mainCraneTargetLocal.z,
+                    minZ,
+                    maxZ
+                );
+
+                float targetX = Mathf.Clamp(
+                    mainLifMagTargetLocal.x,
+                    minX,
+                    maxX
+                );
+
+                Vector3 mainCranePosition = mainCrane.localPosition;
+                Vector3 mainLifMagPosition = mainLifMag.localPosition;
+
+                float forwardBackStep =
+                    GetLocalStep(mainCrane, Vector3.forward, forwardBackSpeed);
+
+                float leftRightStep =
+                    GetLocalStep(mainLifMag, Vector3.right, leftRightSpeed);
+
+                // 前後方向を取出口へ近づける。
+                mainCranePosition.z = Mathf.MoveTowards(
+                    mainCranePosition.z,
+                    targetZ,
+                    forwardBackStep
+                );
+
+                // 左右方向を取出口へ近づける。
+                mainLifMagPosition.x = Mathf.MoveTowards(
+                    mainLifMagPosition.x,
+                    targetX,
+                    leftRightStep
+                );
+
+                mainCrane.localPosition = mainCranePosition;
+                mainLifMag.localPosition = mainLifMagPosition;
+
+                // 前後・左右とも取出口の位置に到着したら停止する。
+                if (Mathf.Approximately(mainCranePosition.z, targetZ)
+                    && Mathf.Approximately(mainLifMagPosition.x, targetX))
                 {
                     state = CraneState.Idle;
                 }
-            
+
                 break;
         }
     }

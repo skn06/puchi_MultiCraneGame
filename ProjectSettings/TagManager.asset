@@ -9,6 +9,7 @@ TagManager:
   - Ball
   - Pokemon
   - Terrain
+  - Prize
   layers:
   - Default
   - TransparentFX
