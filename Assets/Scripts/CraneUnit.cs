@@ -604,6 +604,12 @@ public class CraneUnit : MonoBehaviour
             prizeExitDetector.ResetDetection();
         }
 
+        // 結果表示用に変更した景品のLayerを元へ戻す。
+        if (prizeResultPresenter != null)
+        {
+            prizeResultPresenter.RestorePrizeLayer();
+        }
+
         // 全景品を新しいランダム位置へ再配置する。
         if (prizeManager != null)
         {
