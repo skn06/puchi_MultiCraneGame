@@ -28,7 +28,7 @@ public class DebugFreeCamera : MonoBehaviour
         RotateCamera();
     }
 
-    // W/Sで前後移動し、左クリック中のマウス移動で上下左右に移動する。
+    // ↑/↓で前後移動し、左クリック中のマウス移動で上下左右に移動する。
     private void MoveCamera()
     {
         float speed = moveSpeed;
@@ -38,15 +38,15 @@ public class DebugFreeCamera : MonoBehaviour
             speed *= fastMoveMultiplier;
         }
 
-        // W/Sで前後移動する。
+        // ↑/↓で前後移動する。
         Vector3 direction = Vector3.zero;
 
-        if (Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.UpArrow))
         {
             direction += transform.forward;
         }
 
-        if (Input.GetKey(KeyCode.S))
+        if (Input.GetKey(KeyCode.DownArrow))
         {
             direction -= transform.forward;
         }
