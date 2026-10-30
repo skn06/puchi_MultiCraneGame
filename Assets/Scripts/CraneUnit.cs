@@ -16,6 +16,9 @@ public class CraneUnit : MonoBehaviour
     [Tooltip("爪の開閉を制御するCraneClaw")]
     [SerializeField] private CraneClaw claw;
 
+    [Tooltip("降下中の爪・上部連結部の接触状態を取得する")]
+    [SerializeField] private ClawDescentContactManager descentContactManager;
+
     [Tooltip("景品の保持・解放を制御するPrizeGrabber")]
     [SerializeField] private PrizeGrabber prizeGrabber;
 
@@ -231,6 +234,15 @@ public class CraneUnit : MonoBehaviour
         {
             case CraneState.Descending:
 
+                // 景品またはクレーンゲーム本体に接触したら、
+                // その場で降下を停止して爪を閉じる前の待機へ移る。
+                if (descentContactManager != null
+                    && descentContactManager.AnyTouching)
+                {
+                    BeginWaitingBeforeClose();
+                    break;
+                }
+
                 position.y = Mathf.MoveTowards(
                     position.y,
                     minY,
@@ -239,7 +251,8 @@ public class CraneUnit : MonoBehaviour
 
                 centerLifMag.localPosition = position;
 
-                // 最下部まで来たら、少し待ってから爪を閉じる。
+                // 何にも接触しなかった場合でも、
+                // 安全限界のminYまで来たら降下を停止する。
                 if (Mathf.Approximately(position.y, minY))
                 {
                     BeginWaitingBeforeClose();
