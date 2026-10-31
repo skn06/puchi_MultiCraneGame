@@ -6072,11 +6072,20 @@ MonoBehaviour:
   crane: {fileID: 1378636666}
   inputMode: 0
   deadZone: 0.1
+  forwardKey: 101
+  backwardKey: 100
+  positiveXKey: 115
+  negativeXKey: 102
   joyStickHorizontal: JoyStick2Horizontal
+  invertHorizontal: 0
   joyStickVertical: JoyStick2Vertical
+  invertVertical: 0
   liftToggleKey: 116
   joystickLiftToggleButton: 350
   clawToggleKey: 103
+  joystickClawToggleButton: 351
+  nextGameKey: 32
+  joystickNextGameButton: 352
 --- !u!114 &1612894384
 MonoBehaviour:
   m_ObjectHideFlags: 0

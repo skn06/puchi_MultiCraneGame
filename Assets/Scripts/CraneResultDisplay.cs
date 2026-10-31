@@ -65,12 +65,16 @@ public class CraneResultDisplay : MonoBehaviour
     }
 
     // 次のゲームへの案内を指定位置に表示する。
-    public void ShowNextGamePrompt()
+    public void ShowNextGamePrompt(KeyCode nextGameKey = KeyCode.Space)
     {
         if (nextGameText == null) return;
 
         nextGameText.rectTransform.anchoredPosition = nextGameTextPosition;
-        nextGameText.text = "PRESS SPACE TO PLAY AGAIN";
+        string controlLabel = nextGameKey.ToString()
+            .Replace("Joystick", "JOY ")
+            .Replace("Button", " BUTTON ")
+            .ToUpperInvariant();
+        nextGameText.text = $"PRESS {controlLabel} TO PLAY AGAIN";
         nextGameText.gameObject.SetActive(true);
     }
 

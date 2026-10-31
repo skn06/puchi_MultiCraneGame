@@ -16,51 +16,81 @@ public class CraneOperationManager : MonoBehaviour
     [SerializeField] private InputMode inputMode = InputMode.Keyboard;
     [SerializeField, Range(0f, 1f)] private float deadZone = 0.1f;
 
+    [Header("Keyboard Movement")]
+    [Tooltip("前後方向の+Zへ移動するキー")]
+    [SerializeField] private KeyCode forwardKey = KeyCode.E;
+    [Tooltip("前後方向の-Zへ移動するキー")]
+    [SerializeField] private KeyCode backwardKey = KeyCode.D;
+    [Tooltip("左右方向の+Xへ移動するキー")]
+    [SerializeField] private KeyCode positiveXKey = KeyCode.S;
+    [Tooltip("左右方向の-Xへ移動するキー")]
+    [SerializeField] private KeyCode negativeXKey = KeyCode.F;
+
     [Header("Joystick Axes")]
     [Tooltip("左右移動に使うInput Managerの軸名")]
     [SerializeField] private string joyStickHorizontal = "JoyStick2Horizontal";
+    [Tooltip("左右の入力方向を反転する")]
+    [SerializeField] private bool invertHorizontal;
 
     [Tooltip("前後移動に使うInput Managerの軸名")]
     [SerializeField] private string joyStickVertical = "JoyStick2Vertical";
+    [Tooltip("前後の入力方向を反転する")]
+    [SerializeField] private bool invertVertical;
 
     [Header("Lift Toggle")]
-    [Tooltip("Keyboardモードで下降／上昇を切り替えるキー")]
+    [Tooltip("Keyboardモードで降下開始／降下中の停止を行うキー")]
     [SerializeField] private KeyCode liftToggleKey = KeyCode.T;
-
-    [Tooltip("Joystickモードで下降／上昇を切り替えるボタン。初期値は1台目のButton 0（トリガー）")]
+    [Tooltip("Joystickモードで降下開始／降下中の停止を行うボタン")]
     [SerializeField] private KeyCode joystickLiftToggleButton = KeyCode.Joystick1Button0;
 
     [Header("Claw Toggle")]
-
     [Tooltip("Keyboardモードで爪を開閉するキー")]
     [SerializeField] private KeyCode clawToggleKey = KeyCode.G;
+    [Tooltip("Joystickモードで爪を開閉するボタン。通常操作中のみ有効")]
+    [SerializeField] private KeyCode joystickClawToggleButton = KeyCode.Joystick1Button1;
 
-    
+    [Header("Next Game")]
+    [Tooltip("Keyboardモードで結果画面から次のゲームを開始するキー")]
+    [SerializeField] private KeyCode nextGameKey = KeyCode.Space;
+    [Tooltip("Joystickモードで結果画面から次のゲームを開始するボタン")]
+    [SerializeField] private KeyCode joystickNextGameButton = KeyCode.Joystick1Button2;
+
     private void Update()
     {
         if (crane == null || !crane.isActiveAndEnabled) return;
 
-        // GetKeyDownはUpdateで読み、短い押下も取りこぼさないようにする。
-        // Keyboardモードでは、下降／上昇と爪の開閉をそれぞれ指定キーで切り替える。
-        // Joystickモードでは、対応するボタンで下降／上昇を切り替える。
+        crane.NextGameKey = inputMode == InputMode.Keyboard
+            ? nextGameKey : joystickNextGameButton;
+
+        // ボタンの押下はUpdateで読み、選択した入力モードだけを受け付ける。
         if (inputMode == InputMode.Keyboard)
         {
-            if (Input.GetKeyDown(liftToggleKey))
-            {
-                crane.ToggleLift();
-            }
-
-            if (Input.GetKeyDown(clawToggleKey))
-            {
-                crane.ToggleClaw();
-            }
-
+            HandleButtons(liftToggleKey, clawToggleKey, nextGameKey);
             return;
         }
 
-        if (Input.GetKeyDown(joystickLiftToggleButton))
+        HandleButtons(
+            joystickLiftToggleButton,
+            joystickClawToggleButton,
+            joystickNextGameButton
+        );
+    }
+
+    private void HandleButtons(KeyCode liftButton, KeyCode clawButton, KeyCode nextButton)
+    {
+        if (Input.GetKeyDown(liftButton))
         {
             crane.ToggleLift();
+        }
+
+        if (Input.GetKeyDown(clawButton))
+        {
+            crane.ToggleClaw();
+        }
+
+        if (Input.GetKeyDown(nextButton))
+        {
+            crane.TryStartNextGame();
         }
     }
 
@@ -70,20 +100,24 @@ public class CraneOperationManager : MonoBehaviour
 
         if (inputMode == InputMode.Keyboard)
         {
-            // E/D: 前後、S/F: 左右。上下は押し切り替えで自動移動する。
-            crane.MoveForwardBack(GetKeyboardAxis(KeyCode.E, KeyCode.D));
-            crane.MoveLeftRight(GetKeyboardAxis(KeyCode.S, KeyCode.F));
+            crane.MoveForwardBack(GetKeyboardAxis(forwardKey, backwardKey));
+            crane.MoveLeftRight(GetKeyboardAxis(positiveXKey, negativeXKey));
             return;
         }
 
-        crane.MoveForwardBack(ReadJoystickAxis(joyStickVertical));
-        crane.MoveLeftRight(ReadJoystickAxis(joyStickHorizontal));
+        crane.MoveForwardBack(ReadJoystickAxis(joyStickVertical, invertVertical));
+        crane.MoveLeftRight(ReadJoystickAxis(joyStickHorizontal, invertHorizontal));
     }
 
-    private float ReadJoystickAxis(string axisName)
+    private float ReadJoystickAxis(string axisName, bool invert)
     {
+        // 軸名を空にすると、その方向のジョイスティック入力を無効にできる。
+        if (string.IsNullOrWhiteSpace(axisName)) return 0f;
+
         float value = Input.GetAxis(axisName);
-        return Mathf.Abs(value) < deadZone ? 0f : value;
+        if (Mathf.Abs(value) < deadZone) return 0f;
+
+        return invert ? -value : value;
     }
 
     private static float GetKeyboardAxis(KeyCode positive, KeyCode negative)

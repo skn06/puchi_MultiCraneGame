@@ -122,6 +122,9 @@ public class CraneUnit : MonoBehaviour
     // UI表示用に現在の残り時間を取得できるようにする。
     public float RemainingPlayTime => remainingPlayTime;
 
+    // 結果画面の案内に使う、現在の入力モードの再開キー。
+    public KeyCode NextGameKey { private get; set; } = KeyCode.Space;
+
 
     // ゲーム開始時に操作制限時間のカウントを開始する。
     private void Start()
@@ -149,14 +152,6 @@ public class CraneUnit : MonoBehaviour
     // の自動動作を状態に応じて実行する。
     private void Update()
     {
-        // 結果画面でSpaceを押したら次のゲームへ進む。
-        if (state == CraneState.ResultComplete
-            && Input.GetKeyDown(KeyCode.Space))
-        {
-            StartNextGame();
-            return;
-        }
-
         if (!playTimerRunning) return;
         if (state != CraneState.Idle) return;
 
@@ -511,7 +506,7 @@ public class CraneUnit : MonoBehaviour
                     // クレーンが初期位置へ戻ったら次ゲームへの案内を表示する。
                     if (resultDisplay != null)
                     {
-                        resultDisplay.ShowNextGamePrompt();
+                        resultDisplay.ShowNextGamePrompt(NextGameKey);
                     }
                 }
 
@@ -591,7 +586,15 @@ public class CraneUnit : MonoBehaviour
         stateTimer = beforePrizeDisplayDelay;
     }
 
-    // 結果画面でSpaceが押されたら、すべてを初期状態へ戻して次のゲームを開始する。
+    // 入力元にかかわらず、結果表示と初期位置への復帰が完了したときだけ再開する。
+    public void TryStartNextGame()
+    {
+        if (state != CraneState.ResultComplete) return;
+
+        StartNextGame();
+    }
+
+    // すべてを初期状態へ戻して次のゲームを開始する。
     private void StartNextGame()
     {
         if (resultDisplay != null)
