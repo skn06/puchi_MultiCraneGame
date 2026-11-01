@@ -3337,7 +3337,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -180, y: -50}
+  m_AnchoredPosition: {x: -180, y: -48}
   m_SizeDelta: {x: 300, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &936948491
@@ -5029,7 +5029,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -180, y: -50}
+  m_AnchoredPosition: {x: -180, y: 0}
   m_SizeDelta: {x: 300, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1378636660
@@ -6191,9 +6191,9 @@ MonoBehaviour:
   joyStickVertical: JoyStick2Vertical
   invertVertical: 0
   liftToggleKey: 116
-  joystickLiftToggleButton: 350
+  joystickLiftToggleButton: 348
   clawToggleKey: 103
-  joystickClawToggleButton: 351
+  joystickClawToggleButton: 346
   nextGameKey: 32
   joystickNextGameButton: 32
 --- !u!114 &1612894384
