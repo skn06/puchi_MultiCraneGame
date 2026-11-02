@@ -40,14 +40,14 @@ public class CraneOperationManager : MonoBehaviour
     [Header("Lift Toggle")]
     [Tooltip("Keyboardモードで降下開始／降下中の停止を行うキー")]
     [SerializeField] private KeyCode liftToggleKey = KeyCode.T;
-    [Tooltip("Joystickモードで降下開始／降下中の停止を行うボタン")]
-    [SerializeField] private KeyCode joystickLiftToggleButton = KeyCode.Joystick1Button0;
+    [Tooltip("Joystickモードで降下開始／降下中の停止を行うInput Managerのボタン名。空欄で無効")]
+    [SerializeField] private string joystickLiftToggleButton = "CraneLiftToggle";
 
     [Header("Claw Toggle")]
     [Tooltip("Keyboardモードで爪を開閉するキー")]
     [SerializeField] private KeyCode clawToggleKey = KeyCode.G;
-    [Tooltip("Joystickモードで爪を開閉するボタン。通常操作中のみ有効")]
-    [SerializeField] private KeyCode joystickClawToggleButton = KeyCode.Joystick1Button1;
+    [Tooltip("Joystickモードで爪を開閉するInput Managerのボタン名。通常操作中のみ有効。空欄で無効")]
+    [SerializeField] private string joystickClawToggleButton = "CraneClawToggle";
 
     [Header("Next Game")]
     [Tooltip("Keyboardモードで結果画面から次のゲームを開始するキー")]
@@ -65,33 +65,43 @@ public class CraneOperationManager : MonoBehaviour
         // ボタンの押下はUpdateで読み、選択した入力モードだけを受け付ける。
         if (inputMode == InputMode.Keyboard)
         {
-            HandleButtons(liftToggleKey, clawToggleKey, nextGameKey);
+            HandleButtons(
+                Input.GetKeyDown(liftToggleKey),
+                Input.GetKeyDown(clawToggleKey),
+                Input.GetKeyDown(nextGameKey)
+            );
             return;
         }
 
         HandleButtons(
-            joystickLiftToggleButton,
-            joystickClawToggleButton,
-            joystickNextGameButton
+            ReadJoystickButton(joystickLiftToggleButton),
+            ReadJoystickButton(joystickClawToggleButton),
+            Input.GetKeyDown(joystickNextGameButton)
         );
     }
 
-    private void HandleButtons(KeyCode liftButton, KeyCode clawButton, KeyCode nextButton)
+    private void HandleButtons(bool liftPressed, bool clawPressed, bool nextPressed)
     {
-        if (Input.GetKeyDown(liftButton))
+        if (liftPressed)
         {
             crane.ToggleLift();
         }
 
-        if (Input.GetKeyDown(clawButton))
+        if (clawPressed)
         {
             crane.ToggleClaw();
         }
 
-        if (Input.GetKeyDown(nextButton))
+        if (nextPressed)
         {
             crane.TryStartNextGame();
         }
+    }
+
+    private static bool ReadJoystickButton(string buttonName)
+    {
+        // 軸と同じように、Input Managerの登録名でボタンを指定する。
+        return !string.IsNullOrWhiteSpace(buttonName) && Input.GetButtonDown(buttonName);
     }
 
     private void FixedUpdate()

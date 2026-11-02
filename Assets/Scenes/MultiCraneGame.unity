@@ -6191,9 +6191,9 @@ MonoBehaviour:
   joyStickVertical: JoyStick2Vertical
   invertVertical: 0
   liftToggleKey: 116
-  joystickLiftToggleButton: 348
+  joystickLiftToggleButton: CraneLiftToggle
   clawToggleKey: 103
-  joystickClawToggleButton: 346
+  joystickClawToggleButton: CraneClawToggle
   nextGameKey: 32
   joystickNextGameButton: 32
 --- !u!114 &1612894384

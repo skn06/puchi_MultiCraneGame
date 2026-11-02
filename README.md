@@ -13,19 +13,22 @@ Hierarchyの`CraneController`を選択し、`Crane Operation Manager`の
 | --- | --- | --- | --- |
 | 前後移動 | E: +Z / D: -Z | JoyStick2Vertical | Forward Key / Backward Key、Joy Stick Vertical |
 | 左右移動 | S: +X / F: -X | JoyStick2Horizontal | Positive X Key / Negative X Key、Joy Stick Horizontal |
-| 降下開始／降下中の停止 | T | Joystick1Button0 | Lift Toggle Key / Joystick Lift Toggle Button |
-| 爪の手動開閉 | G | Joystick1Button1 | Claw Toggle Key / Joystick Claw Toggle Button |
+| 降下開始／降下中の停止 | T | CraneLiftToggle | Lift Toggle Key / Joystick Lift Toggle Button |
+| 爪の手動開閉 | G | CraneClawToggle | Claw Toggle Key / Joystick Claw Toggle Button |
 | 結果画面から次ゲーム開始 | Space | Joystick1Button2 | Next Game Key / Joystick Next Game Button |
 
 座標方向はクレーンの移動軸を表す。画面上の方向はカメラの向きによって変わる。
 
 - ボタンは押した瞬間に1回動作する。押し続ける必要はない。
-- ボタン欄はKeyCodeの選択リスト。未割り当てにする場合は`None`を選ぶ。
+- `Joystick Lift Toggle Button`と`Joystick Claw Toggle Button`は、軸と同様にInput Managerに登録済みの名前を入力する。例: `JoyStick2Trigger`、`JoyStick2RedButton`。空欄にするとその操作を無効にできる。
+- Keyboardのキー欄と`Joystick Next Game Button`はKeyCodeの選択リスト。未割り当てにする場合は`None`を選ぶ。
+- 既存シーンの割り当てを引き継ぐため、Input Managerに`CraneLiftToggle`（`joystick button 18`）と`CraneClawToggle`（`joystick button 16`）を追加した。どちらも全ジョイスティックの対応ボタンを受け付ける。
+- ボタンを新規登録する場合は`Edit > Project Settings > Input Manager > Axes`に項目を追加し、`Name`、`Positive Button`（例: `joystick 1 button 0`）、`Type: Key or Mouse Button`を設定する。その`Name`をInspectorのボタン欄に入力する。
 - 軸欄にはInput Managerに登録済みの軸名を入力する。空欄にするとその方向のジョイスティック入力を無効にできる。
 - 現在の`JoyStick2Horizontal`と`JoyStick2Vertical`は、名前に「2」が付いているが1台目のジョイスティックのX/Y軸。
 - スティックを倒した量に応じて速度が変わる。`Dead Zone`は初期値0.1。Input Manager側にもデッドゾーン設定がある。
 - 動く方向が逆の場合は`Invert Horizontal`または`Invert Vertical`を有効にする。
-- 実物のボタンと番号の対応は機種・OSの認識順に依存する。使用機器に合わせてInspectorで選択する。
+- 実物のボタンと番号の対応は機種・OSの認識順に依存する。使用機器に合わせてInput Managerの登録とInspectorの割り当てを設定する。
 
 ## ゲームの動作
 
